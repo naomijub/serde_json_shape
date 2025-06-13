@@ -1,0 +1,26 @@
+token True='true' False='false' Null='null';
+token LBrace='{' RBrace='}' LBrak='[' RBrak=']' Comma=',' Colon=':';
+token String='<string>' Number='<number>';
+token Whitespace Newline;
+
+skip Whitespace Newline;
+
+start file;
+
+file: value;
+value^:
+  object
+| array
+| literal
+;
+object: '{' [member (',' member)*] '}';
+member: String ':' value ;
+array: '[' [value (',' value)*] ']';
+boolean: 'false' | 'true';
+
+literal:
+  String
+| Number
+| boolean
+| 'null'
+;

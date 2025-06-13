@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  typos:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Actions Repository
+      uses: actions/checkout@v4
+    - name: Check spelling
+      uses: crate-ci/typos@master
+      
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Format
+      run: cargo fmt -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install stable@stable toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+    - uses: Swatinem/rust-cache@v2
+    - name: Run Clippy
+      run: cargo clippy --locked --all-features --all-targets
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: check
+        run: cargo check --locked --all-features
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Test
+        run: cargo test --locked --all-features
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install nightly@nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin --locked
+      - name: Generate code coverage
+        run: |
+          cargo +nightly tarpaulin --all-features --workspace --timeout 300 --out Lcov --output-dir ./coverage
+      - name: Upload to coveralls.io
+        uses: coverallsapp/github-action@v2
