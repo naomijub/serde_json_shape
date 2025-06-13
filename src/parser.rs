@@ -1,3 +1,5 @@
+#![allow(clippy::pedantic)]
+#![allow(clippy::nursery)]
 use super::lexer::{Token, tokenize};
 use codespan_reporting::diagnostic::Label;
 use serde::Serialize;
@@ -11,7 +13,7 @@ pub struct Context<'a> {
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
-impl<'a> ParserCallbacks for Parser<'a> {
+impl ParserCallbacks for Parser<'_> {
     fn create_tokens(source: &str, diags: &mut Vec<Diagnostic>) -> (Vec<Token>, Vec<Span>) {
         tokenize(source, diags)
     }

@@ -102,7 +102,7 @@ fn parse_map_shape() {
             content,
             optional: false
         }
-    )
+    );
 }
 
 #[test]

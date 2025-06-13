@@ -33,13 +33,14 @@ pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
     parse_rule(cst, first_node_ref, source)
 }
 
+#[allow(clippy::too_many_lines)]
 fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, Error> {
     match cst.get(node_ref) {
         Node::Rule(Rule::Literal, ..) => parse_token(
             cst,
             cst.children(node_ref)
                 .next()
-                .ok_or(Error::InvalidType("Empty".to_string()))?,
+                .ok_or_else(|| Error::InvalidType("Empty".to_string()))?,
         ),
         Node::Rule(Rule::Boolean, ..) => Ok(Value::Bool { optional: false }),
         Node::Rule(Rule::Array, ..) => {
@@ -77,10 +78,10 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
                 };
                 let content =
                     iter.clone()
-                        .filter_map(|v| v.keys())
+                        .filter_map(Value::keys)
                         .fold(content, |mut acc, mut keys| {
-                            for (key, value) in acc.iter_mut() {
-                                if keys.find(|k| k == &key).is_none() {
+                            for (key, value) in &mut acc {
+                                if !keys.any(|k| k == key) {
                                     value.to_optional_mut();
                                 }
                             }
@@ -93,7 +94,7 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
                     for (key, value) in content {
                         let old_value = acc
                             .entry(key.clone())
-                            .or_insert(value.clone().to_optional());
+                            .or_insert_with(|| value.clone().as_optional());
                         if let Value::OneOf { variants, .. } = old_value {
                             variants.insert(value.clone());
                         }
@@ -103,7 +104,7 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
 
                 Ok(Value::Array {
                     r#type: Box::new(Value::Object {
-                        content: object.clone(),
+                        content: object,
                         optional: false,
                     }),
                     optional: false,
@@ -140,7 +141,7 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
         _ => {
             let range = cst.span(node_ref);
             let content = &source[range.clone()];
-            return Err(Error::InvalidJson(content.to_string(), range));
+            Err(Error::InvalidJson(content.to_string(), range))
         }
     }
 }

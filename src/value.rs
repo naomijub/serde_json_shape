@@ -1,3 +1,4 @@
+#![allow(clippy::match_same_arms)]
 use std::{
     collections::{BTreeMap, BTreeSet, btree_map::Keys},
     fmt::Display,
@@ -39,7 +40,7 @@ pub enum Value {
 
     /// Represents a JSON object.
     Object {
-        /// Object internal members map, with key as `String` and value as `JsonShape`
+        /// Object internal members map, with key as `String` and value as [`JsonShape`]
         content: BTreeMap<String, Value>,
         /// If type is optional
         optional: bool,
@@ -47,7 +48,7 @@ pub enum Value {
 
     /// Represents a JSON Value that can assume one of the Values described
     OneOf {
-        /// All possible JsonShape values
+        /// All possible [`JsonShape`] values
         variants: BTreeSet<Value>,
         /// If type is optional
         optional: bool,
@@ -55,8 +56,9 @@ pub enum Value {
 }
 
 impl Value {
-    /// Is this JsonShape optional? eg, `Option<String>`
-    pub fn is_optional(&self) -> bool {
+    /// Is this [`JsonShape`] optional? eg, `Option<String>`
+    #[must_use]
+    pub const fn is_optional(&self) -> bool {
         match self {
             Value::Null => true,
             Value::Bool { optional } => *optional,
@@ -68,7 +70,8 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_optional(self) -> Self {
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn as_optional(self) -> Self {
         match self {
             Value::Null => Value::Null,
             Value::Bool { .. } => Value::Bool { optional: true },
@@ -89,7 +92,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn to_optional_mut(&mut self) {
+    pub(crate) const fn to_optional_mut(&mut self) {
         match self {
             Value::Null => (),
             Value::Bool { optional } => {
@@ -114,6 +117,7 @@ impl Value {
     }
 
     /// Return the keys contained in a [`JsonShape::Object`]
+    #[must_use]
     pub fn keys(&self) -> Option<Keys<String, Value>> {
         if let Self::Object { content, .. } = self {
             Some(content.keys())
@@ -156,9 +160,9 @@ impl Display for Value {
             ),
             Value::Array { r#type, optional } => {
                 if *optional {
-                    write!(f, "Option<Array<{}>>", r#type)
+                    write!(f, "Option<Array<{type}>>")
                 } else {
-                    write!(f, "Array<{}>", r#type)
+                    write!(f, "Array<{type}>")
                 }
             }
             Value::Object { content, optional } => {

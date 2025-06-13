@@ -1,10 +1,12 @@
+#![allow(clippy::range_plus_one)]
+#![allow(clippy::unnecessary_struct_initialization)]
 use std::fmt;
 
 use super::parser::{Diagnostic, Span};
 use codespan_reporting::diagnostic::Label;
 use logos::{Lexer, Logos};
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum LexerError {
     #[default]
     Invalid,
@@ -54,17 +56,13 @@ fn check_string(value: &str, span: &Span, diags: &mut Vec<Diagnostic>) {
                 Some((_, '"' | '\\' | '/' | 'b' | 'f' | 'n' | 'r' | 't')) => {}
                 Some((i, 'u')) => {
                     for j in 0..4 {
-                        if !it
-                            .next()
-                            .map(|(_, c)| c.is_ascii_hexdigit())
-                            .unwrap_or(false)
-                        {
+                        if !it.next().is_some_and(|(_, c)| c.is_ascii_hexdigit()) {
                             diags.push(
                                 Diagnostic::error()
                                     .with_message("invalid unicode escape sequence")
                                     .with_labels(vec![Label::primary(
                                         (),
-                                        span.start + i - 1..span.start + i + j + 1,
+                                        (span.start + i - 1)..(span.start + i + j + 1),
                                     )]),
                             );
                             break;
@@ -87,7 +85,7 @@ fn check_string(value: &str, span: &Span, diags: &mut Vec<Diagnostic>) {
             c => {
                 diags.push(
                     Diagnostic::error()
-                        .with_message(format!("string contains invalid character {:?}", c))
+                        .with_message(format!("string contains invalid character {c:?}"))
                         .with_labels(vec![
                             Label::primary((), span.start + i..span.start + i + 1)
                                 .with_message("after this character"),
@@ -100,7 +98,7 @@ fn check_string(value: &str, span: &Span, diags: &mut Vec<Diagnostic>) {
 
 // TODO: implement lexer
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Logos, Debug, PartialEq, Copy, Clone)]
+#[derive(Logos, Debug, PartialEq, Eq, Copy, Clone)]
 #[logos(error = LexerError)]
 pub enum Token {
     EOF,
@@ -141,10 +139,8 @@ impl fmt::Display for Token {
             "{}",
             match self {
                 Token::EOF => "SYSNULL",
-                Token::Whitespace => "",
-                Token::Newline => "",
-                Token::True => "Boolean",
-                Token::False => "Boolean",
+                Token::Newline | Token::Whitespace => "",
+                Token::False | Token::True => "Boolean",
                 Token::Null => "Null",
                 Token::LBrace => "{",
                 Token::RBrace => "}",

@@ -1,6 +1,6 @@
 [package]
 name = "json_shape"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Julia Naomi <jnboeira@outlook.com>",]
 description = "Rust library to handle JSON shape"
@@ -31,6 +31,7 @@ missing_docs = "deny"
 [lints.clippy]
 pedantic = { level = "deny", priority = 5 }
 nursery = { level = "deny", priority = 4 }
+equatable_if_let = { level = "allow", priority = 11 }
 similar_names = { level = "allow", priority = 11 }
 use_self = { level = "allow", priority = 11 }
 wildcard_imports = { level = "deny", priority = 11 }

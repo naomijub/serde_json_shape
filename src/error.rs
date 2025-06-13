@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::value::Value;
 
-#[derive(Debug, thiserror::Error, PartialEq)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
 /// Json shapes related errors
 pub enum Error {
     /// Unexpected error has occurred. Usually something with parsing.
