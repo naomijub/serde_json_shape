@@ -39,7 +39,7 @@ pub enum Value {
 
     /// Represents a JSON object.
     Object {
-        /// Object interal members map, with key as `String` and value as `JsonShape`
+        /// Object internal members map, with key as `String` and value as `JsonShape`
         content: BTreeMap<String, Value>,
         /// If type is optional
         optional: bool,
