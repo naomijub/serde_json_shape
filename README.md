@@ -55,6 +55,10 @@ Object{
 }
 ```
 
+> ### Usage Warning
+>
+> This library does not conform to Swagger or JsonSchema specifications, as they are signiticantly more complex than the intended usage for this library.
+
 
 ## Installation
 Run the following Cargo command in your project directory:

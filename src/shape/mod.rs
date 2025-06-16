@@ -10,6 +10,8 @@ use crate::{
     value::Value,
 };
 
+pub(crate) mod merger;
+
 pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
     let Node::Rule(Rule::File, _) = cst.get(NodeRef::ROOT) else {
         let range = cst.span(NodeRef::ROOT);

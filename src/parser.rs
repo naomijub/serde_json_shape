@@ -1,3 +1,5 @@
+// Mostly codegen file
+#![cfg(not(tarpaulin_include))]
 #![allow(clippy::pedantic)]
 #![allow(clippy::nursery)]
 use super::lexer::{Token, tokenize};
