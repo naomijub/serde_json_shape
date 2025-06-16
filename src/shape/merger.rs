@@ -19,7 +19,7 @@ pub fn merge(values: Vec<Value>) -> Result<Value, Error> {
         );
         return Ok(merged);
     }
-    todo!()
+    unimplemented!()
 }
 
 #[cfg(test)]

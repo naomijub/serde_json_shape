@@ -6,7 +6,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) mod subset;
+pub mod subset;
 pub mod subtypes;
 
 /// Represents any valid JSON value shape.

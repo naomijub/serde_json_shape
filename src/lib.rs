@@ -56,6 +56,66 @@ impl Value {
 
         merge(values)
     }
+
+    /// Checks if Json is subset of specific [`JsonShape`]
+    /// ```rust
+    /// use std::str::FromStr;
+    ///
+    /// use json_shape::{IsSubset, JsonShape};
+    /// let shape = JsonShape::Object { content: [
+    ///     ("name".to_string(), JsonShape::String { optional: false }),
+    ///     ("surname".to_string(), JsonShape::String { optional: false }),
+    ///     ("middle name".to_string(), JsonShape::String { optional: true }),
+    ///     ("age".to_string(), JsonShape::Number { optional: false }),
+    ///     ("id".to_string(), JsonShape::OneOf { variants: [
+    ///         JsonShape::Object { content: [
+    ///             ("number".to_string(), JsonShape::Number { optional: false }),
+    ///             ("state".to_string(), JsonShape::String { optional: false }),
+    ///         ].into(), optional: false },
+    ///         JsonShape::Array { r#type: Box::new(JsonShape::Number { optional: false }), optional: false }
+    ///     ].into(), optional: false })
+    /// ].into(), optional: false };
+    ///
+    /// let json = r#"{
+    /// "name": "lorem",
+    /// "surname": "ipsum",
+    /// "age": 30,
+    /// "id": {
+    ///     "number": 123456,
+    ///     "state": "st"
+    /// }
+    /// }"#;
+    ///
+    /// let shape_1 = JsonShape::from_str(json).unwrap();
+    ///
+    /// # assert!(
+    /// shape_1.is_subset(&shape)
+    /// # );
+    /// # assert!(
+    /// shape.is_superset(json)
+    /// # );
+    /// ```
+    #[must_use]
+    pub fn is_superset(&self, json: &str) -> bool {
+        let Ok(value) = Self::from_str(json) else {
+            return false;
+        };
+
+        value.is_subset(self)
+    }
+
+    /// Checks if Json is subset of specific [`JsonShape`]
+    ///
+    /// - Checked version of [`is_superset`]
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if failed to parse Json
+    pub fn is_superset_checked(&self, json: &str) -> Result<bool, Error> {
+        let value = Self::from_str(json)?;
+
+        Ok(value.is_subset(self))
+    }
 }
 
 /// Determines if `T::self` is subset of `T`.

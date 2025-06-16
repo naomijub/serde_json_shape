@@ -15,7 +15,7 @@ pub struct Object;
 /// Simple helper phantom struct to determine if `JsonShape` is of specific subtype `OneOf`.
 pub struct OneOf;
 
-/// Simple helper struct to determine if `JsonShape` is of specific optinal subtype.
+/// Simple helper struct to determine if `JsonShape` is of specific optional subtype.
 pub struct Optional<U>(std::marker::PhantomData<U>);
 
 mod private {
@@ -28,21 +28,23 @@ mod private {
 /// Checks if [`JsonShape`] is an Array of `T`
 pub trait IsArrayOf<T>: private::Sealed {
     /// Checks if [`JsonShape`] is an Array of `T`
-    /// - `value.is_array_of<Null>()`.
+    /// - `value.is_array_of::<Null>()`.
+    #[allow(dead_code)]
     fn is_array_of(&self) -> bool;
 }
 
 /// Checks if [`JsonShape`] is `OneOf` containing `T`
 pub trait IsOneOf<T>: private::Sealed {
     /// Checks if [`JsonShape`] is `OneOf` containing `T`
-    /// - `value.is_one_of<Null>()`.
+    /// - `value.is_one_of::<Null>()`.
     fn is_one_of(&self) -> bool;
 }
 
 /// Checks if [`JsonShape`] is `Object` containing `key: &str` and  `value: T`
 pub trait IsObjectOf<T>: private::Sealed {
     /// Checks if [`JsonShape`] is `Object` containing `key: &str` and  `value: T`
-    /// - `value.is_object_of<Null>("key_1")`.
+    /// - `value.is_object_of::<Null>("key_1")`.
+    #[allow(dead_code)]
     fn is_object_of(&self, key: &str) -> bool;
 }
 
@@ -543,5 +545,181 @@ impl IsObjectOf<Optional<OneOf>> for Value {
         } else {
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_array_of_null() {
+        assert!(IsArrayOf::<Null>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Null),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Null>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_array_of_number() {
+        assert!(IsArrayOf::<Number>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Number>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_array_of_string() {
+        assert!(IsArrayOf::<String>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::String { optional: false }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<String>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_array_of_bool() {
+        assert!(IsArrayOf::<Boolean>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: false }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Boolean>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::String { optional: true }),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_oneof_of_number() {
+        assert!(IsOneOf::<Optional<Number>>::is_one_of(&Value::OneOf {
+            variants: [
+                Value::Number { optional: true },
+                Value::Bool { optional: true },
+                Value::String { optional: true }
+            ]
+            .into(),
+            optional: false
+        }));
+        assert!(IsOneOf::<Number>::is_one_of(&Value::OneOf {
+            variants: [
+                Value::Number { optional: false },
+                Value::Bool { optional: false },
+                Value::String { optional: false }
+            ]
+            .into(),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_oneof_of_bool() {
+        assert!(IsOneOf::<Optional<Boolean>>::is_one_of(&Value::OneOf {
+            variants: [
+                Value::Number { optional: true },
+                Value::Bool { optional: true },
+                Value::String { optional: true }
+            ]
+            .into(),
+            optional: false
+        }));
+        assert!(IsOneOf::<Boolean>::is_one_of(&Value::OneOf {
+            variants: [
+                Value::Number { optional: false },
+                Value::Bool { optional: false },
+                Value::String { optional: false }
+            ]
+            .into(),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_oneof_of_string() {
+        assert!(IsOneOf::<Optional<String>>::is_one_of(&Value::OneOf {
+            variants: [
+                Value::Number { optional: true },
+                Value::Bool { optional: true },
+                Value::String { optional: true }
+            ]
+            .into(),
+            optional: false
+        }));
+        assert!(IsOneOf::<String>::is_one_of(&Value::OneOf {
+            variants: [
+                Value::Number { optional: false },
+                Value::Bool { optional: false },
+                Value::String { optional: false }
+            ]
+            .into(),
+            optional: false
+        }));
+    }
+
+    #[test]
+    fn is_object_of_number() {
+        assert!(IsObjectOf::<Number>::is_object_of(
+            &Value::Object {
+                content: [("key".to_string(), Value::Number { optional: false })].into(),
+                optional: false
+            },
+            "key"
+        ));
+
+        assert!(IsObjectOf::<Optional<Number>>::is_object_of(
+            &Value::Object {
+                content: [("key".to_string(), Value::Number { optional: true })].into(),
+                optional: false
+            },
+            "key"
+        ));
+    }
+
+    #[test]
+    fn is_object_of_string() {
+        assert!(IsObjectOf::<String>::is_object_of(
+            &Value::Object {
+                content: [("key".to_string(), Value::String { optional: false })].into(),
+                optional: false
+            },
+            "key"
+        ));
+
+        assert!(IsObjectOf::<Optional<String>>::is_object_of(
+            &Value::Object {
+                content: [("key".to_string(), Value::String { optional: true })].into(),
+                optional: false
+            },
+            "key"
+        ));
+    }
+
+    #[test]
+    fn is_object_of_bool() {
+        assert!(IsObjectOf::<Boolean>::is_object_of(
+            &Value::Object {
+                content: [("key".to_string(), Value::Bool { optional: false })].into(),
+                optional: false
+            },
+            "key"
+        ));
+
+        assert!(IsObjectOf::<Optional<Boolean>>::is_object_of(
+            &Value::Object {
+                content: [("key".to_string(), Value::Bool { optional: true })].into(),
+                optional: false
+            },
+            "key"
+        ));
     }
 }
