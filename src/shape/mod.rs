@@ -10,12 +10,16 @@ use crate::{
     value::Value,
 };
 
+pub(crate) mod merger;
+
 pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
     let Node::Rule(Rule::File, _) = cst.get(NodeRef::ROOT) else {
         let range = cst.span(NodeRef::ROOT);
         let content = &source[range.clone()];
         return Err(Error::InvalidJson(content.to_string(), range));
     };
+
+    has_errors(cst, source, NodeRef::ROOT)?;
     if cst.children(NodeRef::ROOT).count() > 1 {
         return Err(Error::TooManyRootNodes);
     }
@@ -33,17 +37,37 @@ pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
     parse_rule(cst, first_node_ref, source)
 }
 
+fn has_errors(cst: &Cst<'_>, source: &str, root: NodeRef) -> Result<(), Error> {
+    if cst
+        .children(root)
+        .any(|node_ref| matches!(cst.get(node_ref), Node::Token(Token::Error, _)))
+    {
+        let error = cst
+            .children(NodeRef::ROOT)
+            .find(|node_ref| matches!(cst.get(*node_ref), Node::Token(Token::Error, _)))
+            .unwrap();
+        let span = cst.span(error);
+        let value = &source[span.clone()];
+        return Err(Error::InvalidJson(value.to_string(), span));
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_lines)]
 fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, Error> {
     match cst.get(node_ref) {
-        Node::Rule(Rule::Literal, ..) => parse_token(
-            cst,
-            cst.children(node_ref)
-                .next()
-                .ok_or_else(|| Error::InvalidType("Empty".to_string()))?,
-        ),
+        Node::Rule(Rule::Literal, ..) => {
+            has_errors(cst, source, node_ref)?;
+            parse_token(
+                cst,
+                cst.children(node_ref)
+                    .next()
+                    .ok_or_else(|| Error::InvalidType("Empty".to_string()))?,
+            )
+        }
         Node::Rule(Rule::Boolean, ..) => Ok(Value::Bool { optional: false }),
         Node::Rule(Rule::Array, ..) => {
+            has_errors(cst, source, node_ref)?;
             let mut content = BTreeSet::new();
             for sub_node in cst.children(node_ref).filter(|node_ref| {
                 !matches!(
@@ -126,6 +150,7 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
         }
         Node::Rule(Rule::Object, ..) => {
             let mut content = BTreeMap::default();
+            has_errors(cst, source, node_ref)?;
             for sub_node in cst
                 .children(node_ref)
                 .filter(|node_ref| matches!(cst.get(*node_ref), Node::Rule(Rule::Member, _)))
@@ -175,6 +200,7 @@ fn parse_member(
     let key_span = cst.span(key);
     let key = String::from_str(&source[key_span.start + 1..key_span.end - 1]).unwrap_or_default();
 
+    has_errors(cst, source, sub_node)?;
     let Some(member_value) = cst.children(sub_node).find(|node_ref| {
         matches!(
             cst.get(*node_ref),

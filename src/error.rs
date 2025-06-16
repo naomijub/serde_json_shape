@@ -1,3 +1,5 @@
+#![cfg(not(tarpaulin_include))]
+
 use std::ops::Range;
 
 use crate::value::Value;

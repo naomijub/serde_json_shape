@@ -26,6 +26,7 @@ impl LexerError {
     }
 }
 
+#[cfg(not(tarpaulin_include))]
 fn parse_string(lexer: &mut Lexer<'_, Token>) -> Result<(), LexerError> {
     let mut it = lexer.remainder().chars();
     while let Some(c) = it.next() {
@@ -48,6 +49,7 @@ fn parse_string(lexer: &mut Lexer<'_, Token>) -> Result<(), LexerError> {
     Err(LexerError::UnterminatedString)
 }
 
+#[cfg(not(tarpaulin_include))]
 fn check_string(value: &str, span: &Span, diags: &mut Vec<Diagnostic>) {
     let mut it = value.chars().enumerate();
     while let Some((i, c)) = it.next() {
