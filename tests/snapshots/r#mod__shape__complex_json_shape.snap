@@ -2,4 +2,4 @@
 source: tests/shape.rs
 expression: value
 ---
-Object{"array": Array<OneOf[Boolean | Number | String]>, "array of maps": Array<Object{"a": String, "b": Option<Boolean>, "c": Option<Number>}>, "bool_false": Boolean, "bool_true": Boolean, "map": Object{"a": String, "c": Number}, "nil": Null, "number": Number, "str": String}
+Object{array: Array<OneOf[Boolean | Number | String]>, "array of maps": Array<Object{a: String, b: Option<Boolean>, c: Option<Number>}>, bool_false: Boolean, bool_true: Boolean, map: Object{a: String, c: Number}, nil: Null, number: Number, str: String}
