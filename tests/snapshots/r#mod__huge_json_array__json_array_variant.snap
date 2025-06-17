@@ -1,0 +1,5 @@
+---
+source: tests/huge_json_array.rs
+expression: array
+---
+Array<Object{"1st": Number, "1st%": Number, "20+": Number, "40+": Number, "Att": Number, "Att/G": Number, "Avg": Number, "FUM": Number, "Lng": Number, "Player": String, "Pos": String, "TD": Number, "Team": String, "Yds": Number, "Yds/G": Number}>

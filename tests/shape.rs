@@ -202,3 +202,46 @@ fn parse_duplicated_keys_object_shape() {
         "invalid type `Boolean`. Expected `Number`."
     );
 }
+
+#[test]
+fn complex_json_shape_from_sources() {
+    let source_1 = r#"{
+        "str": "this is a string",
+        "number": 123.456,
+        "nil": null,
+        "array": [123, "string", true],
+        "map": {
+          "a": "b",
+          "c": 123,
+          "d": 1
+        },
+        "array of maps": [
+            {
+                "a": "b",
+                "c": 123
+            }
+        ]
+    }"#;
+
+    let source_2 = r#"{
+        "str": "this is a string",
+        "bool": true,
+        "nil": null,
+        "array": [123, "string"],
+        "map": {
+          "a": "b",
+          "c": 123,
+          "e": 2
+        },
+        "array of maps": [
+            {
+                "a": "b",
+                "b": true
+            }
+        ]
+    }"#;
+
+    let shape = JsonShape::from_sources(&[source_1, source_2]).unwrap();
+
+    assert_snapshot!(shape);
+}

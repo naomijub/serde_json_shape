@@ -37,23 +37,32 @@ Will be parsed as:
 
 ```ru
 Object{
-    "array": Array<OneOf[Boolean | Number | String]>,
+    array: Array<OneOf[Boolean | Number | String]>,
     "array of maps": Array<Object{
-        "a": String, 
-        "b": Option<Boolean>, 
-        "c": Option<Number>
+        a: String, 
+        b: Option<Boolean>, 
+        c: Option<Number>
     }>, 
-    "bool_false": Boolean, 
-    "bool_true": Boolean, 
-    "map": Object{
-        "a": String, 
-        "c": Number
+    bool_false: Boolean, 
+    bool_true: Boolean, 
+    map: Object{
+        a: String, 
+        c: Number
     }, 
-    "nil": Null, 
-    "number": Number, 
-    "str": String
+    nil: Null, 
+    number: Number, 
+    str: String
 }
 ```
+
+### General rules when merging two [`JsonShape`]:
+- `T + Null = Option<T>`
+- `T + U = OneOf[T | U]`
+- `T + Option<U> = OneOf[T | U | Null]`
+- `Array<T> + Array<U> => Array<OneOf[T | U]>`
+- `Object{key: Number, "key space": Bool} +  Object{key: String, "key_special_char?": String} => Object{key: OneOf[Number | String], "key space": Option<Bool>, "key_special_char?": Option<String> }`
+- `OneOf[T | U] + OneOf[V | X] = OneOf[T | U | V | X]`
+- `OneOf[T | U] + Option<U> = OneOf[T | U | Null]`
 
 > ### Usage Warning
 >
@@ -105,3 +114,6 @@ let source = r#"{
 
 let json_shape = JsonShape::from_str(source).unwrap();
 ```
+
+## Current TODO:
+- [] Implement a logical case for a `tuple`, array that contains the same exact types in order, `[T, U, V]` should be `AllOf<T, U, V>`.

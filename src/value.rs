@@ -9,6 +9,13 @@ use serde::{Deserialize, Serialize};
 pub mod subset;
 pub mod subtypes;
 
+/// Helper trait to identify when two `JsonShapes` are similar but not equal, meaning they only diverge in being optional.
+pub trait Similar<Rhs: ?Sized = Self> {
+    /// Tests for `self` and `other` values to be similar (equal ignoring the optional), returning the optional version
+    #[must_use]
+    fn similar(&self, other: &Rhs) -> Option<Value>;
+}
+
 /// Represents any valid JSON value shape.
 ///
 /// See the [`serde_json_shape::value` module documentation](self) for usage examples.
@@ -74,18 +81,6 @@ impl Value {
         }
     }
 
-    pub(crate) const fn is_single(&self) -> bool {
-        match self {
-            Value::Null => true,
-            Value::Bool { .. } => true,
-            Value::Number { .. } => true,
-            Value::String { .. } => true,
-            Value::Array { .. } => false,
-            Value::Object { .. } => false,
-            Value::OneOf { .. } => false,
-        }
-    }
-
     #[allow(clippy::wrong_self_convention)]
     pub(crate) fn as_optional(self) -> Self {
         match self {
@@ -103,6 +98,28 @@ impl Value {
             },
             Value::OneOf { variants, .. } => Value::OneOf {
                 optional: true,
+                variants,
+            },
+        }
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    pub(crate) fn as_non_optional(self) -> Self {
+        match self {
+            Value::Null => Value::Null,
+            Value::Bool { .. } => Value::Bool { optional: false },
+            Value::Number { .. } => Value::Number { optional: false },
+            Value::String { .. } => Value::String { optional: false },
+            Value::Array { r#type, .. } => Value::Array {
+                optional: false,
+                r#type,
+            },
+            Value::Object { content, .. } => Value::Object {
+                optional: false,
+                content,
+            },
+            Value::OneOf { variants, .. } => Value::OneOf {
+                optional: false,
                 variants,
             },
         }
@@ -246,10 +263,67 @@ impl Display for Value {
     }
 }
 
+impl Similar for Value {
+    fn similar(&self, other: &Self) -> Option<Value> {
+        match (self, other) {
+            (Value::Null, Value::Null) => Some(Value::Null),
+            (Value::Bool { optional }, Value::Bool { optional: opt }) => Some(Value::Bool {
+                optional: *optional || *opt,
+            }),
+            (Value::Number { optional }, Value::Number { optional: opt }) => Some(Value::Number {
+                optional: *optional || *opt,
+            }),
+            (Value::String { optional }, Value::String { optional: opt }) => Some(Value::String {
+                optional: *optional || *opt,
+            }),
+            (
+                Value::Array { r#type, optional },
+                Value::Array {
+                    r#type: ty,
+                    optional: opt,
+                },
+            ) if ty == r#type => Some(Value::Array {
+                r#type: ty.clone(),
+                optional: *optional || *opt,
+            }),
+            (
+                Value::Object { content, optional },
+                Value::Object {
+                    content: cont,
+                    optional: opt,
+                },
+            ) if cont == content => Some(Value::Object {
+                content: content.clone(),
+                optional: *optional || *opt,
+            }),
+            (
+                Value::OneOf { variants, optional },
+                Value::OneOf {
+                    variants: var,
+                    optional: opt,
+                },
+            ) if var == variants => Some(Value::OneOf {
+                variants: variants.clone(),
+                optional: *optional || *opt,
+            }),
+            _ => None,
+        }
+    }
+}
+
 fn display_object_content(content: &BTreeMap<String, Value>) -> String {
     content
         .iter()
-        .map(|(key, value)| format!("\"{key}\": {value}"))
+        .map(|(key, value)| {
+            if key
+                .chars()
+                .all(|char| char.is_alphanumeric() || char == '_' || char == '-')
+            {
+                format!("{key}: {value}")
+            } else {
+                format!("\"{key}\": {value}")
+            }
+        })
         .collect::<Vec<_>>()
         .join(", ")
 }
@@ -434,7 +508,7 @@ mod tests {
                 .into()
             }
             .to_string(),
-            "Option<Object{\"key_1\": Null, \"key_2\": Option<Number>, \"key_3\": Number}>"
+            "Option<Object{key_1: Null, key_2: Option<Number>, key_3: Number}>"
         );
         assert_eq!(
             Value::OneOf {
@@ -483,7 +557,7 @@ mod tests {
                 .into()
             }
             .to_string(),
-            "Object{\"key_1\": Null, \"key_2\": Option<Number>, \"key_3\": Number}"
+            "Object{key_1: Null, key_2: Option<Number>, key_3: Number}"
         );
         assert_eq!(
             Value::OneOf {
@@ -514,5 +588,25 @@ mod tests {
         assert!(!v.is_optional());
         v.to_optional_mut();
         assert!(v.is_optional());
+    }
+
+    #[test]
+    fn parse_multiple_keys() {
+        let map = [
+            ("key_value_1".to_string(), Value::Null),
+            ("key-value-1".to_string(), Value::Null),
+            ("KeyValue1".to_string(), Value::Null),
+            ("key value 1".to_string(), Value::Null),
+            ("key_value?".to_string(), Value::Null),
+            ("key_value!".to_string(), Value::Null),
+        ]
+        .into();
+
+        let s = display_object_content(&map);
+
+        assert_eq!(
+            s,
+            "KeyValue1: Null, \"key value 1\": Null, key-value-1: Null, \"key_value!\": Null, \"key_value?\": Null, key_value_1: Null"
+        );
     }
 }
