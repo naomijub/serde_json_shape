@@ -30,4 +30,8 @@ pub enum Error {
     /// Object expected a type but found something unexpected.
     #[error("invalid type `{0}`. Expected `{1}`.")]
     InvalidObjectValueType(Value, Value),
+
+    /// Not able to merge the two [`JsonShapes`]
+    #[error("not able to merge `{0}` with `{1}`.")]
+    CannotMerge(Value, Value),
 }

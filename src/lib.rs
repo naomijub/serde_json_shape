@@ -17,6 +17,7 @@ use crate::{
     value::Value,
 };
 
+pub use value::Similar;
 pub use value::Value as JsonShape;
 
 /// Creates a [`JsonShape`] from a single Json source
@@ -54,7 +55,7 @@ impl Value {
             values.push(parse_cst(&cst, source)?);
         }
 
-        merge(values)
+        merge(&values)
     }
 
     /// Checks if Json is subset of specific [`JsonShape`]
