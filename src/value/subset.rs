@@ -17,6 +17,7 @@ use crate::{
 /// - `JsonShape::Object{"key_a": JsonShape::Number}` is subset of `JsonShape::Object{"key_a": JsonShape::OneOf[Number | Boolean]}`
 impl IsSubset for Value {
     #[allow(clippy::too_many_lines)]
+    /// Checks if [`JsonShape`] is subset of `other` [`JsonShape`]
     fn is_subset(&self, other: &Self) -> bool {
         match self {
             Value::Null => other.is_optional() || other.is_null(),
@@ -45,6 +46,29 @@ impl IsSubset for Value {
                     r#type: r#type.clone(),
                     optional: true,
                 }),
+                _ => false,
+            },
+            Value::Tuple {
+                elements,
+                optional: true,
+            } => match other {
+                Value::Tuple {
+                    elements: other,
+                    optional: true,
+                } => {
+                    elements.iter().zip(other).all(|(a, b)| a.is_subset(b))
+                        && elements.len() == other.len()
+                }
+                Value::OneOf { variants, .. } => variants.contains(&Value::Tuple {
+                    elements: elements.clone(),
+                    optional: true,
+                }),
+                Value::Array { r#type, .. } => {
+                    let Value::OneOf { variants, .. } = &&**r#type else {
+                        return false;
+                    };
+                    elements.iter().all(|element| variants.contains(element))
+                }
                 _ => false,
             },
             Value::Object {
@@ -109,10 +133,42 @@ impl IsSubset for Value {
                 optional: false,
             } => match other {
                 Value::Array { r#type: ty, .. } => r#type.is_subset(ty),
-                Value::OneOf { variants, .. } => variants.contains(&Value::Array {
-                    r#type: r#type.clone(),
-                    optional: true,
-                }),
+                Value::OneOf { variants, .. } => {
+                    variants.contains(&Value::Array {
+                        r#type: r#type.clone(),
+                        optional: false,
+                    }) || variants.contains(&Value::Array {
+                        r#type: r#type.clone(),
+                        optional: true,
+                    })
+                }
+                _ => false,
+            },
+            Value::Tuple {
+                elements,
+                optional: false,
+            } => match other {
+                Value::Tuple {
+                    elements: other, ..
+                } => {
+                    elements.iter().zip(other).all(|(a, b)| a.is_subset(b))
+                        && elements.len() == other.len()
+                }
+                Value::OneOf { variants, .. } => {
+                    variants.contains(&Value::Tuple {
+                        elements: elements.clone(),
+                        optional: false,
+                    }) || variants.contains(&Value::Tuple {
+                        elements: elements.clone(),
+                        optional: true,
+                    })
+                }
+                Value::Array { r#type, .. } => {
+                    let Value::OneOf { variants, .. } = &&**r#type else {
+                        return false;
+                    };
+                    elements.iter().all(|element| variants.contains(element))
+                }
                 _ => false,
             },
             Value::Object {
@@ -860,11 +916,12 @@ mod tests {
                         "key".to_string(),
                         Value::OneOf {
                             variants: [
-                                Value::Number { optional: true },
-                                Value::Bool { optional: false }
+                                Value::Number { optional: false },
+                                Value::Bool { optional: false },
+                                Value::Null,
                             ]
                             .into(),
-                            optional: true
+                            optional: false
                         }
                     )]
                     .into(),
@@ -931,5 +988,69 @@ mod tests {
         };
 
         assert!(value.is_subset(&shape));
+    }
+}
+
+#[cfg(test)]
+mod ai_tests {
+    use super::*;
+    #[test]
+    fn null_is_subset_of_null() {
+        assert!(Value::Null.is_subset(&Value::Null));
+    }
+
+    #[test]
+    fn null_is_not_subset_of_number() {
+        assert!(!Value::Null.is_subset(&Value::Number { optional: false }));
+    }
+
+    #[test]
+    fn null_is_not_subset_of_string() {
+        assert!(!Value::Null.is_subset(&Value::String { optional: false }));
+    }
+
+    #[test]
+    fn number_is_subset_of_number() {
+        assert!(Value::Number { optional: false }.is_subset(&Value::Number { optional: false }));
+    }
+
+    #[test]
+    fn number_is_not_subset_of_string() {
+        assert!(!Value::Number { optional: false }.is_subset(&Value::String { optional: false }));
+    }
+
+    #[test]
+    fn number_is_not_subset_of_null() {
+        assert!(!Value::Number { optional: false }.is_subset(&Value::Null));
+    }
+
+    #[test]
+    fn string_is_subset_of_string() {
+        assert!(Value::String { optional: false }.is_subset(&Value::String { optional: false }));
+    }
+
+    #[test]
+    fn string_is_not_subset_of_number() {
+        assert!(!Value::String { optional: false }.is_subset(&Value::Number { optional: false }));
+    }
+
+    #[test]
+    fn string_is_not_subset_of_null() {
+        assert!(!Value::String { optional: false }.is_subset(&Value::Null));
+    }
+
+    #[test]
+    fn boolean_is_subset_of_boolean() {
+        assert!(Value::Bool { optional: false }.is_subset(&Value::Bool { optional: false }));
+    }
+
+    #[test]
+    fn boolean_is_not_subset_of_number() {
+        assert!(!Value::Bool { optional: false }.is_subset(&Value::Number { optional: false }));
+    }
+
+    #[test]
+    fn boolean_is_not_subset_of_string() {
+        assert!(!Value::Bool { optional: false }.is_subset(&Value::String { optional: false }));
     }
 }
