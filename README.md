@@ -12,10 +12,11 @@ This libraries is not intended to serialize a JSON into a value representation l
 {
     "str": "this is a string",
     "number": 123.456,
+    "array": [1, 2, 3, 4],
     "bool_true": true,
     "bool_false": false,
     "nil": null,
-    "array": [123, "string", true],
+    "tuple": [123, "string", true],
     "map": {
         "a": "b",
         "c": 123
@@ -37,7 +38,7 @@ Will be parsed as:
 
 ```ru
 Object{
-    array: Tuple(Boolean, Number, String),
+    array: Array<Number>,
     "array of maps": Array<Object{
         a: String, 
         b: Option<Boolean>, 
@@ -51,7 +52,8 @@ Object{
     }, 
     nil: Null, 
     number: Number, 
-    str: String
+    str: String,
+    tuple: Tuple(Boolean, Number, String)
 }
 ```
 
@@ -97,7 +99,7 @@ let source = r#"{
         "bool_true": true,
         "bool_false": false,
         "nil": null,
-        "array": [123, "string", true],
+        "tuple": [123, "string", true],
         "map": {
           "a": "b",
           "c": 123
