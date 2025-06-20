@@ -83,7 +83,7 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
                 elements.push(shape);
             }
 
-            if elements.len() == 1 {
+            if elements.len() == 1 || elements.windows(2).all(|w| w[0] == w[1]) {
                 Ok(Value::Array {
                     r#type: Box::new(elements.first().cloned().unwrap()),
                     optional: false,

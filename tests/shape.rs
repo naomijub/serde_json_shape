@@ -109,7 +109,8 @@ fn complex_json_shape() {
         "bool_true": true,
         "bool_false": false,
         "nil": null,
-        "array": [123, "string", true],
+        "array": [1, 2, 3, 4],
+        "tuple": [123, "string", true],
         "map": {
           "a": "b",
           "c": 123
@@ -133,6 +134,13 @@ fn complex_json_shape() {
             content: [
                 (
                     "array".to_string(),
+                    JsonShape::Array {
+                        r#type: Box::new(JsonShape::Number { optional: false }),
+                        optional: false
+                    }
+                ),
+                (
+                    "tuple".to_string(),
                     JsonShape::Tuple {
                         elements: vec![
                             JsonShape::Number { optional: false },
