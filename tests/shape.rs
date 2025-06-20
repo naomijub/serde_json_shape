@@ -60,19 +60,15 @@ fn parse_array_shape() {
 
     assert_eq!(
         value,
-        JsonShape::Array {
-            r#type: Box::new(JsonShape::OneOf {
-                variants: [
-                    JsonShape::String { optional: false },
-                    JsonShape::Number { optional: false },
-                    JsonShape::Number { optional: false },
-                    JsonShape::Bool { optional: false },
-                    JsonShape::Bool { optional: false },
-                    JsonShape::Null,
-                ]
-                .into(),
-                optional: false
-            }),
+        JsonShape::Tuple {
+            elements: vec![
+                JsonShape::String { optional: false },
+                JsonShape::Number { optional: false },
+                JsonShape::Number { optional: false },
+                JsonShape::Bool { optional: false },
+                JsonShape::Bool { optional: false },
+                JsonShape::Null,
+            ],
             optional: false
         }
     );
@@ -137,16 +133,12 @@ fn complex_json_shape() {
             content: [
                 (
                     "array".to_string(),
-                    JsonShape::Array {
-                        r#type: Box::new(JsonShape::OneOf {
-                            variants: [
-                                JsonShape::Number { optional: false },
-                                JsonShape::String { optional: false },
-                                JsonShape::Bool { optional: false }
-                            ]
-                            .into(),
-                            optional: false
-                        }),
+                    JsonShape::Tuple {
+                        elements: vec![
+                            JsonShape::Number { optional: false },
+                            JsonShape::String { optional: false },
+                            JsonShape::Bool { optional: false }
+                        ],
                         optional: false
                     },
                 ),

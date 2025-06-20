@@ -37,7 +37,7 @@ Will be parsed as:
 
 ```ru
 Object{
-    array: Array<OneOf[Boolean | Number | String]>,
+    array: Tuple(Boolean, Number, String),
     "array of maps": Array<Object{
         a: String, 
         b: Option<Boolean>, 
@@ -59,7 +59,9 @@ Object{
 - `T + Null = Option<T>`
 - `T + U = OneOf[T | U]`
 - `T + Option<U> = OneOf[T | U | Null]`
+- `Tuple(U, T, V) + Tuple(U, T, Null) = Tuple(U, T, Option<V>)`
 - `Array<T> + Array<U> => Array<OneOf[T | U]>`
+- `Tuple(U, T, V) + Array<U> = Array<OneOf[T | U | V]>`
 - `Object{key: Number, "key space": Bool} +  Object{key: String, "key_special_char?": String} => Object{key: OneOf[Number | String], "key space": Option<Bool>, "key_special_char?": Option<String> }`
 - `OneOf[T | U] + OneOf[V | X] = OneOf[T | U | V | X]`
 - `OneOf[T | U] + Option<U> = OneOf[T | U | Null]`
@@ -115,5 +117,4 @@ let source = r#"{
 let json_shape = JsonShape::from_str(source).unwrap();
 ```
 
-## Current TODO:
-- [] Implement a logical case for a `tuple`, array that contains the same exact types in order, `[T, U, V]` should be `AllOf<T, U, V>`.
+* If multiple `JSON` sources are available, you may use [`JsonShape::from_sources`](https://docs.rs/json_shape/latest/json_shape/enum.JsonShape.html#method.from_sources), which expects a list of Json strings.

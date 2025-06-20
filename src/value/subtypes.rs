@@ -25,6 +25,18 @@ mod private {
     impl Sealed for Value {}
 }
 
+impl Value {
+    #[must_use]
+    /// Cheecks if [`JsonShape::Tuple`] is tuple containing `&[JsonShape]` in the same order and type.
+    pub fn is_tuple_of(&self, types: &[Value]) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            elements.len() == types.len() && elements.iter().zip(types.iter()).all(|(a, b)| a == b)
+        } else {
+            false
+        }
+    }
+}
+
 /// Checks if [`JsonShape`] is an Array of `T`
 pub trait IsArrayOf<T>: private::Sealed {
     /// Checks if [`JsonShape`] is an Array of `T`
@@ -303,7 +315,8 @@ impl IsOneOf<Optional<Number>> for Value {
         if let Value::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Number { optional: true }))
+                .any(|variant| matches!(&variant, &Value::Number { .. }))
+                && variants.contains(&Value::Null)
         } else {
             false
         }
@@ -315,7 +328,8 @@ impl IsOneOf<Optional<String>> for Value {
         if let Value::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::String { optional: true }))
+                .any(|variant| matches!(&variant, &Value::String { .. }))
+                && variants.contains(&Value::Null)
         } else {
             false
         }
@@ -327,7 +341,8 @@ impl IsOneOf<Optional<Boolean>> for Value {
         if let Value::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Bool { optional: true }))
+                .any(|variant| matches!(&variant, &Value::Bool { .. }))
+                && variants.contains(&Value::Null)
         } else {
             false
         }
@@ -339,7 +354,8 @@ impl IsOneOf<Optional<Array>> for Value {
         if let Value::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Array { optional: true, .. }))
+                .any(|variant| matches!(&variant, &Value::Array { .. }))
+                && variants.contains(&Value::Null)
         } else {
             false
         }
@@ -351,7 +367,8 @@ impl IsOneOf<Optional<Object>> for Value {
         if let Value::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Object { optional: true, .. }))
+                .any(|variant| matches!(&variant, &Value::Object { .. }))
+                && variants.contains(&Value::Null)
         } else {
             false
         }
@@ -360,10 +377,11 @@ impl IsOneOf<Optional<Object>> for Value {
 
 impl IsOneOf<Optional<OneOf>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Value::OneOf { variants, optional } = self {
             variants
                 .iter()
                 .any(|variant| matches!(&variant, &Value::OneOf { optional: true, .. }))
+                || *optional
         } else {
             false
         }
@@ -604,9 +622,10 @@ mod tests {
     fn is_oneof_of_number() {
         assert!(IsOneOf::<Optional<Number>>::is_one_of(&Value::OneOf {
             variants: [
-                Value::Number { optional: true },
-                Value::Bool { optional: true },
-                Value::String { optional: true }
+                Value::Number { optional: false },
+                Value::Bool { optional: false },
+                Value::String { optional: false },
+                Value::Null
             ]
             .into(),
             optional: false
@@ -628,7 +647,8 @@ mod tests {
             variants: [
                 Value::Number { optional: true },
                 Value::Bool { optional: true },
-                Value::String { optional: true }
+                Value::String { optional: true },
+                Value::Null
             ]
             .into(),
             optional: false
@@ -648,9 +668,10 @@ mod tests {
     fn is_oneof_of_string() {
         assert!(IsOneOf::<Optional<String>>::is_one_of(&Value::OneOf {
             variants: [
-                Value::Number { optional: true },
-                Value::Bool { optional: true },
-                Value::String { optional: true }
+                Value::Number { optional: false },
+                Value::Bool { optional: false },
+                Value::String { optional: false },
+                Value::Null
             ]
             .into(),
             optional: false
@@ -721,5 +742,212 @@ mod tests {
             },
             "key"
         ));
+    }
+}
+
+#[cfg(test)]
+mod ai_tests {
+    use super::*;
+
+    #[test]
+    fn value_is_oneof_number() {
+        let value = Value::OneOf {
+            variants: [
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ]
+            .into(),
+            optional: false,
+        };
+        assert!(IsOneOf::<Number>::is_one_of(&value));
+    }
+
+    #[test]
+    fn value_is_not_oneof_string() {
+        let value = Value::OneOf {
+            variants: [
+                Value::Number { optional: false },
+                Value::Bool { optional: false },
+            ]
+            .into(),
+            optional: false,
+        };
+        assert!(!IsOneOf::<String>::is_one_of(&value));
+    }
+
+    #[test]
+    fn value_is_oneof_optional_number() {
+        let value = Value::OneOf {
+            variants: [Value::Null, Value::Number { optional: false }].into(),
+            optional: false,
+        };
+        assert!(IsOneOf::<Optional<Number>>::is_one_of(&value));
+    }
+
+    #[test]
+    fn value_is_not_oneof_optional_string() {
+        let value = Value::OneOf {
+            variants: [
+                Value::Bool { optional: false },
+                Value::Number { optional: false },
+                Value::Null,
+            ]
+            .into(),
+            optional: false,
+        };
+        assert!(!IsOneOf::<Optional<String>>::is_one_of(&value));
+    }
+
+    #[test]
+    fn value_is_not_oneof_optional_oneof() {
+        let value = Value::OneOf {
+            variants: [
+                Value::Bool { optional: false },
+                Value::Number { optional: false },
+                Value::Null,
+            ]
+            .into(),
+            optional: false,
+        };
+        assert!(!IsOneOf::<Optional<OneOf>>::is_one_of(&value));
+    }
+
+    #[test]
+    fn value_is_oneof_optional_oneof() {
+        let value = Value::OneOf {
+            variants: [
+                Value::Bool { optional: false },
+                Value::Number { optional: false },
+                Value::Null,
+            ]
+            .into(),
+            optional: true,
+        };
+        assert!(IsOneOf::<Optional<OneOf>>::is_one_of(&value));
+    }
+
+    #[test]
+    fn value_is_arrayof_number() {
+        let value = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+        assert!(IsArrayOf::<Number>::is_array_of(&value));
+    }
+
+    #[test]
+    fn value_is_not_arrayof_string() {
+        let value = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+        assert!(!IsArrayOf::<String>::is_array_of(&value));
+    }
+
+    #[test]
+    fn value_is_arrayof_optional_number() {
+        let value = Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
+            optional: false,
+        };
+        assert!(IsArrayOf::<Optional<Number>>::is_array_of(&value));
+    }
+
+    #[test]
+    fn value_is_not_arrayof_optional_string() {
+        let value = Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
+            optional: false,
+        };
+        assert!(!IsArrayOf::<Optional<String>>::is_array_of(&value));
+    }
+
+    #[test]
+    fn value_is_objectof_number() {
+        let value = Value::Object {
+            content: [("key".to_string(), Value::Number { optional: false })].into(),
+            optional: false,
+        };
+        assert!(IsObjectOf::<Number>::is_object_of(&value, "key"));
+    }
+
+    #[test]
+    fn value_is_not_objectof_string() {
+        let value = Value::Object {
+            content: [("key".to_string(), Value::Number { optional: false })].into(),
+            optional: false,
+        };
+        assert!(!IsObjectOf::<String>::is_object_of(&value, "key"));
+    }
+
+    #[test]
+    fn test_is_tuple_of_match() {
+        let value = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let types = vec![
+            Value::Number { optional: false },
+            Value::String { optional: false },
+        ];
+        assert!(value.is_tuple_of(&types));
+    }
+
+    #[test]
+    fn test_is_tuple_of_match_with_optional() {
+        let value = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: true },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let types = vec![
+            Value::Number { optional: false },
+            Value::String { optional: false },
+        ];
+        assert!(!value.is_tuple_of(&types));
+    }
+
+    #[test]
+    fn test_is_tuple_of_mismatch() {
+        let value = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let types = vec![
+            Value::Number { optional: false },
+            Value::Bool { optional: false },
+        ];
+        assert!(!value.is_tuple_of(&types));
+    }
+
+    #[test]
+    fn test_is_tuple_of_length_mismatch() {
+        let value = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let types = vec![Value::Number { optional: false }];
+        assert!(!value.is_tuple_of(&types));
+    }
+
+    #[test]
+    fn test_is_tuple_of_not_tuple() {
+        let value = Value::Number { optional: false };
+        let types = vec![
+            Value::Number { optional: false },
+            Value::String { optional: false },
+        ];
+        assert!(!value.is_tuple_of(&types));
     }
 }

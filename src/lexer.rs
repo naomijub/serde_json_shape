@@ -1,3 +1,4 @@
+#![cfg(not(tarpaulin_include))]
 #![allow(clippy::range_plus_one)]
 #![allow(clippy::unnecessary_struct_initialization)]
 use std::fmt;

@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    str::FromStr,
-};
+use std::{collections::BTreeMap, str::FromStr};
 
 use crate::{
     error::Error,
@@ -68,7 +65,7 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
         Node::Rule(Rule::Boolean, ..) => Ok(Value::Bool { optional: false }),
         Node::Rule(Rule::Array, ..) => {
             has_errors(cst, source, node_ref)?;
-            let mut content = BTreeSet::new();
+            let mut elements = Vec::new();
             for sub_node in cst.children(node_ref).filter(|node_ref| {
                 !matches!(
                     cst.get(*node_ref),
@@ -83,20 +80,20 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
                 )
             }) {
                 let shape = parse_rule(cst, sub_node, source)?;
-                content.insert(shape);
+                elements.push(shape);
             }
 
-            if content.len() == 1 {
+            if elements.len() == 1 {
                 Ok(Value::Array {
-                    r#type: Box::new(content.first().cloned().unwrap()),
+                    r#type: Box::new(elements.first().cloned().unwrap()),
                     optional: false,
                 })
-            } else if content.len() > 1
-                && content
+            } else if elements.len() > 1
+                && elements
                     .iter()
                     .all(|value| matches!(value, Value::Object { .. }))
             {
-                let mut iter = content.iter();
+                let mut iter = elements.iter();
                 let Some(Value::Object { content, .. }) = iter.next().cloned() else {
                     return Err(Error::Unknown);
                 };
@@ -133,12 +130,9 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
                     }),
                     optional: false,
                 })
-            } else if content.len() > 1 {
-                Ok(Value::Array {
-                    r#type: Box::new(Value::OneOf {
-                        variants: content,
-                        optional: false,
-                    }),
+            } else if elements.len() > 1 {
+                Ok(Value::Tuple {
+                    elements,
                     optional: false,
                 })
             } else {

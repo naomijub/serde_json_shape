@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 pub mod subset;
 pub mod subtypes;
 
-/// Helper trait to identify when two `JsonShapes` are similar but not equal, meaning they only diverge in being optional.
+/// Helper trait to identify when two `JsonShapes` are similar but not necessarily equal, meaning they only diverge in being optional.
 pub trait Similar<Rhs: ?Sized = Self> {
     /// Tests for `self` and `other` values to be similar (equal ignoring the optional), returning the optional version
     #[must_use]
@@ -64,6 +64,15 @@ pub enum Value {
         /// If type is optional
         optional: bool,
     },
+
+    /// Represents a JSON Array that behaves like a tuple.
+    /// Similar to a Rust tuple, types are always the same and in same order
+    Tuple {
+        /// [`JsonShape`] order
+        elements: Vec<Value>,
+        /// If type is optional
+        optional: bool,
+    },
 }
 
 impl Value {
@@ -78,6 +87,7 @@ impl Value {
             Value::Array { optional, .. } => *optional,
             Value::Object { optional, .. } => *optional,
             Value::OneOf { optional, .. } => *optional,
+            Value::Tuple { optional, .. } => *optional,
         }
     }
 
@@ -99,6 +109,10 @@ impl Value {
             Value::OneOf { variants, .. } => Value::OneOf {
                 optional: true,
                 variants,
+            },
+            Value::Tuple { elements, .. } => Value::Tuple {
+                optional: true,
+                elements,
             },
         }
     }
@@ -122,6 +136,10 @@ impl Value {
                 optional: false,
                 variants,
             },
+            Value::Tuple { elements, .. } => Value::Tuple {
+                optional: false,
+                elements,
+            },
         }
     }
 
@@ -144,6 +162,9 @@ impl Value {
                 *optional = true;
             }
             Value::OneOf { optional, .. } => {
+                *optional = true;
+            }
+            Value::Tuple { optional, .. } => {
                 *optional = true;
             }
         }
@@ -187,6 +208,12 @@ impl Value {
     #[must_use]
     pub const fn is_array(&self) -> bool {
         matches!(self, Self::Array { .. })
+    }
+
+    /// Checks if Json Node is tuple
+    #[must_use]
+    pub const fn is_tuple(&self) -> bool {
+        matches!(self, Self::Tuple { .. })
     }
 
     /// Checks if Json Node is object
@@ -259,6 +286,18 @@ impl Display for Value {
                     write!(f, "OneOf[{variants}]",)
                 }
             }
+            Value::Tuple { elements, optional } => {
+                let elements = elements
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                if *optional {
+                    write!(f, "Option<Tuple({elements})>",)
+                } else {
+                    write!(f, "Tuple({elements})",)
+                }
+            }
         }
     }
 }
@@ -306,6 +345,16 @@ impl Similar for Value {
                 variants: variants.clone(),
                 optional: *optional || *opt,
             }),
+            (
+                Value::Tuple { elements, optional },
+                Value::Tuple {
+                    elements: ty,
+                    optional: opt,
+                },
+            ) if ty == elements => Some(Value::Tuple {
+                elements: ty.clone(),
+                optional: *optional || *opt,
+            }),
             _ => None,
         }
     }
@@ -346,6 +395,13 @@ mod tests {
             .is_optional()
         );
         assert!(
+            Value::Tuple {
+                optional: true,
+                elements: vec![Value::Null]
+            }
+            .is_optional()
+        );
+        assert!(
             Value::Object {
                 optional: true,
                 content: BTreeMap::default()
@@ -370,6 +426,13 @@ mod tests {
             !Value::Array {
                 optional: false,
                 r#type: Box::new(Value::Null)
+            }
+            .is_optional()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: vec![Value::Null]
             }
             .is_optional()
         );
@@ -426,6 +489,14 @@ mod tests {
             .as_optional()
             .is_optional()
         );
+        assert!(
+            Value::Tuple {
+                optional: false,
+                elements: vec![Value::Null]
+            }
+            .as_optional()
+            .is_optional()
+        );
     }
 
     #[test]
@@ -446,6 +517,14 @@ mod tests {
             Value::OneOf {
                 optional: true,
                 variants: BTreeSet::default()
+            }
+            .keys()
+            .is_none()
+        );
+        assert!(
+            Value::Tuple {
+                optional: true,
+                elements: Vec::default()
             }
             .keys()
             .is_none()
@@ -523,6 +602,19 @@ mod tests {
             .to_string(),
             "Option<OneOf[Null | Number | Option<Number>]>"
         );
+        assert_eq!(
+            Value::Tuple {
+                optional: true,
+                elements: [
+                    Value::Null,
+                    Value::Number { optional: true },
+                    Value::Number { optional: false }
+                ]
+                .into()
+            }
+            .to_string(),
+            "Option<Tuple(Null, Option<Number>, Number)>"
+        );
     }
 
     #[test]
@@ -571,6 +663,19 @@ mod tests {
             }
             .to_string(),
             "OneOf[Null | Number | Option<Number>]"
+        );
+        assert_eq!(
+            Value::Tuple {
+                optional: false,
+                elements: [
+                    Value::Null,
+                    Value::Number { optional: true },
+                    Value::Number { optional: false }
+                ]
+                .into()
+            }
+            .to_string(),
+            "Tuple(Null, Option<Number>, Number)"
         );
     }
 

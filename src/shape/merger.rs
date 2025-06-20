@@ -1,6 +1,9 @@
-use std::collections::BTreeMap;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    ops::Deref,
+};
 
-use crate::{error::Error, value::Value};
+use crate::{IsSubset, error::Error, value::Value};
 
 pub fn merge(values: &[Value]) -> Result<Value, Error> {
     let mut iter = values.iter();
@@ -21,6 +24,10 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
         (Value::Null, Value::String { .. }) => Ok(Value::String { optional: true }),
         (Value::Null, Value::Array { r#type, .. }) => Ok(Value::Array {
             r#type,
+            optional: true,
+        }),
+        (Value::Null, Value::Tuple { elements, .. }) => Ok(Value::Tuple {
+            elements,
             optional: true,
         }),
         (Value::Null, Value::Object { content, .. }) => Ok(Value::Object {
@@ -124,6 +131,41 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
                         Value::Bool { optional: false },
                         Value::Array {
                             r#type,
+                            optional: false,
+                        },
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            }
+        }
+        // Bool + Array = OneOf[Bool | Array]
+        (
+            Value::Bool { optional },
+            Value::Tuple {
+                elements,
+                optional: other_opt,
+            },
+        ) => {
+            if optional || other_opt {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::Bool { optional: false },
+                        Value::Tuple {
+                            elements,
+                            optional: false,
+                        },
+                        Value::Null,
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            } else {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::Bool { optional: false },
+                        Value::Tuple {
+                            elements,
                             optional: false,
                         },
                     ]
@@ -285,6 +327,40 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
         }
         (
             Value::Number { optional },
+            Value::Tuple {
+                elements,
+                optional: other_opt,
+            },
+        ) => {
+            if optional || other_opt {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::Number { optional: false },
+                        Value::Tuple {
+                            elements,
+                            optional: false,
+                        },
+                        Value::Null,
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            } else {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::Number { optional: false },
+                        Value::Tuple {
+                            elements,
+                            optional: false,
+                        },
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            }
+        }
+        (
+            Value::Number { optional },
             Value::Object {
                 content,
                 optional: other_opt,
@@ -422,6 +498,40 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
                         Value::String { optional: false },
                         Value::Array {
                             r#type,
+                            optional: false,
+                        },
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            }
+        }
+        (
+            Value::String { optional },
+            Value::Tuple {
+                elements,
+                optional: other_opt,
+            },
+        ) => {
+            if optional || other_opt {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::String { optional: false },
+                        Value::Tuple {
+                            elements,
+                            optional: false,
+                        },
+                        Value::Null,
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            } else {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::String { optional: false },
+                        Value::Tuple {
+                            elements,
                             optional: false,
                         },
                     ]
@@ -595,6 +705,36 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
                 r#type: Box::new(ty),
                 optional: optional || other_opt,
             })
+        }
+        (
+            Value::Array {
+                r#type,
+                optional: opt,
+            },
+            Value::Tuple { elements, optional },
+        ) => {
+            let mut variants = BTreeSet::default();
+            variants.insert(r#type.deref().clone());
+            for element in elements {
+                variants.insert(element.as_non_optional());
+            }
+            if opt || optional {
+                Ok(Value::Array {
+                    r#type: Box::new(Value::OneOf {
+                        variants,
+                        optional: false,
+                    }),
+                    optional: true,
+                })
+            } else {
+                Ok(Value::Array {
+                    r#type: Box::new(Value::OneOf {
+                        variants,
+                        optional: false,
+                    }),
+                    optional: false,
+                })
+            }
         }
         (
             Value::Array { r#type, optional },
@@ -800,6 +940,46 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
         }
         (
             Value::Object { content, optional },
+            Value::Tuple {
+                elements,
+                optional: other_opt,
+            },
+        ) => {
+            if optional || other_opt {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::Object {
+                            content,
+                            optional: false,
+                        },
+                        Value::Tuple {
+                            elements,
+                            optional: false,
+                        },
+                        Value::Null,
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            } else {
+                Ok(Value::OneOf {
+                    variants: [
+                        Value::Object {
+                            content,
+                            optional: false,
+                        },
+                        Value::Tuple {
+                            elements,
+                            optional: false,
+                        },
+                    ]
+                    .into(),
+                    optional: false,
+                })
+            }
+        }
+        (
+            Value::Object { content, optional },
             Value::Object {
                 content: mut other_content,
                 optional: other_opt,
@@ -874,9 +1054,111 @@ pub fn merger(rhs: Value, lhs: Value) -> Result<Value, Error> {
             if value.is_optional() && !variants.contains(&Value::Null) {
                 variants.insert(Value::Null);
             }
-            println!("Value: {value}");
             variants.insert(value.as_non_optional());
             Ok(Value::OneOf { variants, optional })
+        }
+        (Value::Tuple { elements, .. }, Value::Null) => Ok(Value::Tuple {
+            elements,
+            optional: true,
+        }),
+        (
+            Value::Tuple { elements, optional },
+            Value::Array {
+                r#type,
+                optional: opt,
+            },
+        ) => {
+            let mut variants = BTreeSet::default();
+            if elements.iter().any(Value::is_optional) || r#type.is_optional() {
+                variants.insert(Value::Null);
+            }
+            variants.insert(r#type.deref().clone());
+            for element in elements {
+                variants.insert(element.as_non_optional());
+            }
+
+            if opt || optional {
+                Ok(Value::Array {
+                    r#type: Box::new(Value::OneOf {
+                        variants,
+                        optional: false,
+                    }),
+                    optional: true,
+                })
+            } else {
+                Ok(Value::Array {
+                    r#type: Box::new(Value::OneOf {
+                        variants,
+                        optional: false,
+                    }),
+                    optional: false,
+                })
+            }
+        }
+        (
+            Value::Tuple { elements, optional },
+            Value::Tuple {
+                elements: other,
+                optional: opt,
+            },
+        ) => {
+            let folded = elements
+                .iter()
+                .zip(other.iter())
+                .map(|(a, b)| {
+                    if a.is_subset(b) {
+                        Some(b.to_owned())
+                    } else if b.is_subset(a) {
+                        Some(a.to_owned())
+                    } else if b.is_null() {
+                        Some(a.clone().as_optional())
+                    } else if a.is_null() {
+                        Some(b.clone().as_optional())
+                    } else {
+                        None
+                    }
+                })
+                .try_fold(Vec::new(), |mut acc, v| {
+                    acc.push(v?);
+                    Some(acc)
+                });
+            if let (true, Some(folded)) = (elements.len() == other.len(), folded) {
+                Ok(Value::Tuple {
+                    elements: folded,
+                    optional: optional || opt,
+                })
+            } else {
+                let mut variants = BTreeSet::default();
+                if elements.iter().any(Value::is_optional) || other.iter().any(Value::is_optional) {
+                    variants.insert(Value::Null);
+                }
+                for element in elements {
+                    variants.insert(element.as_non_optional());
+                }
+                for element in other {
+                    variants.insert(element.as_non_optional());
+                }
+                Ok(Value::Array {
+                    r#type: Box::new(Value::OneOf {
+                        variants,
+                        optional: false,
+                    }),
+                    optional: optional || opt,
+                })
+            }
+        }
+        (Value::Tuple { elements, .. }, other) => {
+            let mut variants: BTreeSet<Value> = BTreeSet::default();
+            if elements.iter().any(Value::is_optional) || other.is_optional() {
+                variants.insert(Value::Null);
+            }
+            variants.extend(elements.into_iter().map(Value::as_non_optional));
+            variants.insert(other.as_non_optional());
+
+            Ok(Value::OneOf {
+                variants,
+                optional: false,
+            })
         }
     }
 }
@@ -1057,6 +1339,261 @@ mod tests {
 
         let expected = Value::Array {
             r#type: Box::new(Value::String { optional: true }),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    // AI GENERATED
+    #[test]
+    fn merge_objects_with_different_keys() {
+        let value_1 = Value::Object {
+            content: [
+                ("key1".to_string(), Value::String { optional: false }),
+                ("key2".to_string(), Value::Number { optional: false }),
+            ]
+            .into(),
+            optional: false,
+        };
+        let value_2 = Value::Object {
+            content: [
+                ("key3".to_string(), Value::Bool { optional: false }),
+                (
+                    "key4".to_string(),
+                    Value::Array {
+                        r#type: Box::new(Value::String { optional: false }),
+                        optional: false,
+                    },
+                ),
+            ]
+            .into(),
+            optional: false,
+        };
+
+        let expected = Value::Object {
+            content: [
+                ("key1".to_string(), Value::String { optional: true }),
+                ("key2".to_string(), Value::Number { optional: true }),
+                ("key3".to_string(), Value::Bool { optional: true }),
+                (
+                    "key4".to_string(),
+                    Value::Array {
+                        r#type: Box::new(Value::String { optional: false }),
+                        optional: true,
+                    },
+                ),
+            ]
+            .into(),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_arrays_with_different_types() {
+        let value_1 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+        let value_2 = Value::Array {
+            r#type: Box::new(Value::String { optional: false }),
+            optional: false,
+        };
+
+        let expected = Value::Array {
+            r#type: Box::new(Value::OneOf {
+                variants: [
+                    Value::Number { optional: false },
+                    Value::String { optional: false },
+                ]
+                .into(),
+                optional: false,
+            }),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_value_with_itself() {
+        let value = Value::Number { optional: false };
+        assert_eq!(merge(&[value.clone(), value.clone()]).unwrap(), value);
+    }
+
+    #[test]
+    fn merge_empty_array_with_non_empty_array() {
+        let value_1 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+        let value_2 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+
+        let expected = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_tuples_with_same_length() {
+        let value_1 = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: true },
+            ],
+            optional: false,
+        };
+        let value_2 = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: true },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+
+        let expected = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: true },
+                Value::String { optional: true },
+            ],
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_tuples_with_same_length_optional_tuples() {
+        let value_1 = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let value_2 = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: true,
+        };
+
+        let expected = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: true,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_tuples_with_different_lengths() {
+        let value_1 = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let value_2 = Value::Tuple {
+            elements: vec![
+                Value::Bool { optional: false },
+                Value::Number { optional: false },
+                Value::String { optional: true },
+            ],
+            optional: false,
+        };
+
+        let expected = Value::Array {
+            r#type: Box::new(Value::OneOf {
+                variants: [
+                    Value::Bool { optional: false },
+                    Value::Number { optional: false },
+                    Value::String { optional: false },
+                    Value::Null,
+                ]
+                .into(),
+                optional: false,
+            }),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_tuple_with_array() {
+        let value_1 = Value::Tuple {
+            elements: vec![
+                Value::Number { optional: false },
+                Value::String { optional: false },
+            ],
+            optional: false,
+        };
+        let value_2 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+
+        let expected = Value::Array {
+            r#type: Box::new(Value::OneOf {
+                variants: [
+                    Value::Number { optional: false },
+                    Value::String { optional: false },
+                ]
+                .into(),
+                optional: false,
+            }),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_arrays_with_same_type() {
+        let value_1 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+        let value_2 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+
+        let expected = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+
+        assert_eq!(merge(&[value_1, value_2]).unwrap(), expected);
+    }
+
+    #[test]
+    fn merge_arrays_with_same_type_but_one_optional() {
+        let value_1 = Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: false,
+        };
+        let value_2 = Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
+            optional: false,
+        };
+
+        let expected = Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
             optional: false,
         };
 
