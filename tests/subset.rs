@@ -156,6 +156,9 @@ fn json_is_subset_of_json_shape_checked_json_error() {
 
     assert_eq!(
         shape.is_superset_checked(json_1).unwrap_err(),
-        Error::InvalidJson("\"st\n    }\n}".to_string(), 117..128)
+        Error::InvalidJson {
+            value: "\"st\n    }\n}".to_string(),
+            span: 117..128
+        }
     );
 }

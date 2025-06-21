@@ -50,7 +50,13 @@ fn parse_something_else_shape_error() {
     let source = "random";
     let err = JsonShape::from_str(source).unwrap_err();
 
-    assert_eq!(err, Error::InvalidJson("random".to_string(), 0..6));
+    assert_eq!(
+        err,
+        Error::InvalidJson {
+            value: "random".to_string(),
+            span: 0..6
+        }
+    );
 }
 
 #[test]

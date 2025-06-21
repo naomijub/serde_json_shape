@@ -11,9 +11,9 @@ pub(crate) mod merger;
 
 pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
     let Node::Rule(Rule::File, _) = cst.get(NodeRef::ROOT) else {
-        let range = cst.span(NodeRef::ROOT);
-        let content = &source[range.clone()];
-        return Err(Error::InvalidJson(content.to_string(), range));
+        let span = cst.span(NodeRef::ROOT);
+        let value = source[span.clone()].to_string();
+        return Err(Error::InvalidJson { value, span });
     };
 
     has_errors(cst, source, NodeRef::ROOT)?;
@@ -26,9 +26,9 @@ pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
             Node::Token(Token::Whitespace | Token::Newline, _)
         )
     }) else {
-        let range = cst.span(NodeRef::ROOT);
-        let content = &source[range.clone()];
-        return Err(Error::InvalidJson(content.to_string(), range));
+        let span = cst.span(NodeRef::ROOT);
+        let value = source[span.clone()].to_string();
+        return Err(Error::InvalidJson { value, span });
     };
 
     parse_rule(cst, first_node_ref, source)
@@ -39,13 +39,14 @@ fn has_errors(cst: &Cst<'_>, source: &str, root: NodeRef) -> Result<(), Error> {
         .children(root)
         .any(|node_ref| matches!(cst.get(node_ref), Node::Token(Token::Error, _)))
     {
-        let error = cst
-            .children(NodeRef::ROOT)
+        if let Some(error) = cst
+            .children(root)
             .find(|node_ref| matches!(cst.get(*node_ref), Node::Token(Token::Error, _)))
-            .unwrap();
-        let span = cst.span(error);
-        let value = &source[span.clone()];
-        return Err(Error::InvalidJson(value.to_string(), span));
+        {
+            let span = cst.span(error);
+            let value = source[span.clone()].to_string();
+            return Err(Error::InvalidJson { value, span });
+        }
     }
     Ok(())
 }
@@ -158,9 +159,9 @@ fn parse_rule(cst: &Cst<'_>, node_ref: NodeRef, source: &str) -> Result<Value, E
             })
         }
         _ => {
-            let range = cst.span(node_ref);
-            let content = &source[range.clone()];
-            Err(Error::InvalidJson(content.to_string(), range))
+            let span = cst.span(node_ref);
+            let value = source[span.clone()].to_string();
+            Err(Error::InvalidJson { value, span })
         }
     }
 }

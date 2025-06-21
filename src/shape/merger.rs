@@ -7,7 +7,7 @@ use crate::{IsSubset, error::Error, value::Value};
 
 pub fn merge(values: &[Value]) -> Result<Value, Error> {
     let mut iter = values.iter();
-    let first = iter.next().ok_or(Error::Unknown)?.to_owned();
+    let first = iter.next().ok_or(Error::EmptyFile)?.to_owned();
     iter.try_fold(first, |acc, v| merger(acc, v.to_owned()))
 }
 
