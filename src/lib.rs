@@ -6,6 +6,7 @@ mod value;
 
 mod lexer;
 pub(crate) mod parser;
+pub(crate) mod serde;
 pub(crate) mod shape;
 
 use std::str::FromStr;
