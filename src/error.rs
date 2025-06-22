@@ -22,8 +22,8 @@ pub enum Error {
         span: Range<usize>,
     },
     /// JSON that has too many root nodes. eg, two objects not contained in an array.
-    #[error("invalid JSON: Too many root nodes, expected 1.")]
-    TooManyRootNodes,
+    #[error("invalid JSON: Too many root nodes `{0}`, expected 1.")]
+    TooManyRootNodes(usize),
     /// Invalid type was found
     #[error("invalid type `{0}`. Expected number, string, boolean, null, array or object.")]
     InvalidType(String),

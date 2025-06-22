@@ -715,3 +715,521 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod tests_is_a {
+    use super::*;
+
+    #[test]
+    fn only_string_is_a_string() {
+        assert!(Value::String { optional: false }.is_string());
+        assert!(Value::String { optional: true }.is_string());
+        assert!(!Value::Null.is_string());
+        assert!(!Value::Bool { optional: false }.is_string());
+        assert!(!Value::Number { optional: false }.is_string());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_string()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_string()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_string()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_string()
+        );
+    }
+
+    #[test]
+    fn only_number_is_a_number() {
+        assert!(!Value::String { optional: false }.is_number());
+        assert!(!Value::Null.is_number());
+        assert!(!Value::Bool { optional: false }.is_number());
+        assert!(Value::Number { optional: false }.is_number());
+        assert!(Value::Number { optional: true }.is_number());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_number()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_number()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_number()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_number()
+        );
+    }
+
+    #[test]
+    fn only_null_is_null() {
+        assert!(!Value::String { optional: false }.is_null());
+        assert!(Value::Null.is_null());
+        assert!(!Value::Bool { optional: false }.is_null());
+        assert!(!Value::Number { optional: true }.is_null());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_null()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_null()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_null()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_null()
+        );
+    }
+
+    #[test]
+    fn only_bool_is_bool() {
+        assert!(!Value::String { optional: false }.is_boolean());
+        assert!(!Value::Null.is_boolean());
+        assert!(Value::Bool { optional: false }.is_boolean());
+        assert!(!Value::Number { optional: true }.is_boolean());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_boolean()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_boolean()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_boolean()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_boolean()
+        );
+    }
+
+    #[test]
+    fn only_array_is_array() {
+        assert!(!Value::String { optional: false }.is_array());
+        assert!(!Value::Null.is_array());
+        assert!(!Value::Bool { optional: false }.is_array());
+        assert!(!Value::Number { optional: true }.is_array());
+        assert!(
+            Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_array()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_array()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_array()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_array()
+        );
+    }
+
+    #[test]
+    fn only_object_is_object() {
+        assert!(!Value::String { optional: false }.is_object());
+        assert!(!Value::Null.is_object());
+        assert!(!Value::Bool { optional: false }.is_object());
+        assert!(!Value::Number { optional: true }.is_object());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_object()
+        );
+        assert!(
+            Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_object()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_object()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_object()
+        );
+    }
+
+    #[test]
+    fn only_one_of_is_one_of() {
+        assert!(!Value::String { optional: false }.is_oneof());
+        assert!(!Value::Null.is_oneof());
+        assert!(!Value::Bool { optional: false }.is_oneof());
+        assert!(!Value::Number { optional: true }.is_oneof());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_oneof()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_oneof()
+        );
+        assert!(
+            Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_oneof()
+        );
+        assert!(
+            !Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_oneof()
+        );
+    }
+
+    #[test]
+    fn only_tuple_is_tuple() {
+        assert!(!Value::String { optional: false }.is_tuple());
+        assert!(!Value::Null.is_tuple());
+        assert!(!Value::Bool { optional: false }.is_tuple());
+        assert!(!Value::Number { optional: true }.is_tuple());
+        assert!(
+            !Value::Array {
+                optional: false,
+                r#type: Box::new(Value::Null)
+            }
+            .is_tuple()
+        );
+        assert!(
+            !Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .is_tuple()
+        );
+        assert!(
+            !Value::OneOf {
+                optional: false,
+                variants: BTreeSet::default()
+            }
+            .is_tuple()
+        );
+        assert!(
+            Value::Tuple {
+                optional: false,
+                elements: Vec::default()
+            }
+            .is_tuple()
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests_similar {
+    use super::*;
+
+    #[test]
+    fn null_is_similar_to_null() {
+        assert!(Value::Null.similar(&Value::Null).is_some());
+        assert!(
+            Value::Null
+                .similar(&Value::String { optional: false })
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn str_is_similar_to_str() {
+        assert_eq!(
+            Value::String { optional: false }.similar(&Value::String { optional: false }),
+            Some(Value::String { optional: false })
+        );
+        assert_eq!(
+            Value::String { optional: false }.similar(&Value::String { optional: true }),
+            Some(Value::String { optional: true })
+        );
+        assert_eq!(
+            Value::String { optional: false }.similar(&Value::Number { optional: true }),
+            None
+        );
+    }
+
+    #[test]
+    fn bool_is_similar_to_bool() {
+        assert_eq!(
+            Value::Bool { optional: false }.similar(&Value::Bool { optional: false }),
+            Some(Value::Bool { optional: false })
+        );
+        assert_eq!(
+            Value::Bool { optional: false }.similar(&Value::Bool { optional: true }),
+            Some(Value::Bool { optional: true })
+        );
+        assert_eq!(
+            Value::Bool { optional: false }.similar(&Value::Number { optional: true }),
+            None
+        );
+    }
+
+    #[test]
+    fn number_is_similar_to_number() {
+        assert_eq!(
+            Value::Number { optional: false }.similar(&Value::Number { optional: false }),
+            Some(Value::Number { optional: false })
+        );
+        assert_eq!(
+            Value::Number { optional: false }.similar(&Value::Number { optional: true }),
+            Some(Value::Number { optional: true })
+        );
+        assert_eq!(
+            Value::Number { optional: false }.similar(&Value::Bool { optional: true }),
+            None
+        );
+    }
+
+    #[test]
+    fn object_is_similar_to_object() {
+        assert_eq!(
+            Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .similar(&Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }),
+            Some(Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            })
+        );
+        assert_eq!(
+            Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .similar(&Value::Object {
+                optional: true,
+                content: BTreeMap::default()
+            }),
+            Some(Value::Object {
+                optional: true,
+                content: BTreeMap::default()
+            })
+        );
+        assert_eq!(
+            Value::Object {
+                optional: false,
+                content: BTreeMap::default()
+            }
+            .similar(&Value::Bool { optional: true }),
+            None
+        );
+    }
+
+    #[test]
+    fn array_is_similar_to_array() {
+        assert_eq!(
+            Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: false
+            }
+            .similar(&Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: false
+            }),
+            Some(Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: false
+            })
+        );
+        assert_eq!(
+            Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: false
+            }
+            .similar(&Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: true
+            }),
+            Some(Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: true
+            })
+        );
+        assert_eq!(
+            Value::Array {
+                r#type: Box::new(Value::Null),
+                optional: false
+            }
+            .similar(&Value::Bool { optional: true }),
+            None
+        );
+    }
+
+    #[test]
+    fn oneof_is_similar_to_oneof() {
+        assert_eq!(
+            Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: false
+            }
+            .similar(&Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: false
+            }),
+            Some(Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: false
+            })
+        );
+        assert_eq!(
+            Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: false
+            }
+            .similar(&Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: true
+            }),
+            Some(Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: true
+            })
+        );
+        assert_eq!(
+            Value::OneOf {
+                variants: BTreeSet::new(),
+                optional: false
+            }
+            .similar(&Value::Bool { optional: true }),
+            None
+        );
+    }
+
+    #[test]
+    fn tuple_is_similar_to_tuple() {
+        assert_eq!(
+            Value::Tuple {
+                elements: Vec::new(),
+                optional: false
+            }
+            .similar(&Value::Tuple {
+                elements: Vec::new(),
+                optional: false
+            }),
+            Some(Value::Tuple {
+                elements: Vec::new(),
+                optional: false
+            })
+        );
+        assert_eq!(
+            Value::Tuple {
+                elements: Vec::new(),
+                optional: false
+            }
+            .similar(&Value::Tuple {
+                elements: Vec::new(),
+                optional: true
+            }),
+            Some(Value::Tuple {
+                elements: Vec::new(),
+                optional: true
+            })
+        );
+        assert_eq!(
+            Value::Tuple {
+                elements: Vec::new(),
+                optional: false
+            }
+            .similar(&Value::Bool { optional: true }),
+            None
+        );
+    }
+}
