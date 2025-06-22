@@ -493,7 +493,7 @@ mod test_errors {
 
         let err = parse_cst(&cst, source).unwrap_err();
 
-        assert_eq!(err.to_string(), "invalid JSON `\"123: 123 }`: 2..12");
+        assert_eq!(err.to_string(), "invalid JSON `\"123: 123 }`: 2..13");
     }
 
     #[test]
