@@ -18,7 +18,15 @@ pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
 
     has_errors(cst, source, NodeRef::ROOT)?;
     if cst.children(NodeRef::ROOT).count() > 1 {
-        return Err(Error::TooManyRootNodes);
+        if let Some(err) = cst
+            .children(NodeRef::ROOT)
+            .find(|node_ref| has_errors(cst, source, *node_ref).is_err())
+        {
+            let span = cst.span(err);
+            let value = source[span.clone()].to_string();
+            return Err(Error::InvalidJson { value, span });
+        }
+        return Err(Error::TooManyRootNodes(cst.children(NodeRef::ROOT).count()));
     }
     let Some(first_node_ref) = cst.children(NodeRef::ROOT).find(|node_ref| {
         !matches!(
@@ -35,14 +43,18 @@ pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
 }
 
 fn has_errors(cst: &Cst<'_>, source: &str, root: NodeRef) -> Result<(), Error> {
-    if cst
-        .children(root)
-        .any(|node_ref| matches!(cst.get(node_ref), Node::Token(Token::Error, _)))
-    {
-        if let Some(error) = cst
-            .children(root)
-            .find(|node_ref| matches!(cst.get(*node_ref), Node::Token(Token::Error, _)))
-        {
+    if cst.children(root).any(|node_ref| {
+        matches!(
+            cst.get(node_ref),
+            Node::Token(Token::Error, _) | Node::Rule(Rule::Error, _)
+        )
+    }) {
+        if let Some(error) = cst.children(root).find(|node_ref| {
+            matches!(
+                cst.get(*node_ref),
+                Node::Token(Token::Error, _) | Node::Rule(Rule::Error, _)
+            )
+        }) {
             let span = cst.span(error);
             let value = source[span.clone()].to_string();
             return Err(Error::InvalidJson { value, span });
@@ -231,4 +243,286 @@ fn parse_member(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::Parser;
+
+    use super::*;
+
+    #[test]
+    fn parse_null() {
+        let source = "null";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(value, Value::Null);
+    }
+
+    #[test]
+    fn parse_number() {
+        let source = "123";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(value, Value::Number { optional: false });
+    }
+
+    #[test]
+    fn parse_string() {
+        let source = "\"123\"";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(value, Value::String { optional: false });
+    }
+
+    #[test]
+    fn parse_bool() {
+        let source = "true";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(value, Value::Bool { optional: false });
+    }
+
+    #[test]
+    fn parse_array() {
+        let source = "[12, 34, 56, 78]";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Array {
+                r#type: Box::new(Value::Number { optional: false }),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_array_other() {
+        let source = "[true, false, true]";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Array {
+                r#type: Box::new(Value::Bool { optional: false }),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_tuple() {
+        let source = "[12, true, \"str\"]";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Tuple {
+                elements: vec![
+                    Value::Number { optional: false },
+                    Value::Bool { optional: false },
+                    Value::String { optional: false }
+                ],
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_object() {
+        let source = r#"{"key": 123, "key2": true}"#;
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Object {
+                content: [
+                    ("key".to_string(), Value::Number { optional: false }),
+                    ("key2".to_string(), Value::Bool { optional: false })
+                ]
+                .into(),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_array_of_objects_diff() {
+        let source = r#"[{"a": 1}, {"b": 2}, {"c": 3}, {}]"#;
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Array {
+                r#type: Box::new(Value::Object {
+                    content: [
+                        ("a".to_string(), Value::Number { optional: true }),
+                        ("b".to_string(), Value::Number { optional: true }),
+                        ("c".to_string(), Value::Number { optional: true })
+                    ]
+                    .into(),
+                    optional: false
+                }),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_array_of_objects_same() {
+        let source = r#"[{"a": 1}, {"a": 2}, {"a": 3}]"#;
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Array {
+                r#type: Box::new(Value::Object {
+                    content: [("a".to_string(), Value::Number { optional: false })].into(),
+                    optional: false
+                }),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_array_of_objects_diff_single_key() {
+        let source = r#"[{"a": 1}, {"a": 4, "b": 2}, {"a" : 5, "c": 3}]"#;
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Array {
+                r#type: Box::new(Value::Object {
+                    content: [
+                        ("a".to_string(), Value::Number { optional: false }),
+                        ("b".to_string(), Value::Number { optional: true }),
+                        ("c".to_string(), Value::Number { optional: true })
+                    ]
+                    .into(),
+                    optional: false
+                }),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_array_of_emptyobject() {
+        let source = "[{}]";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Array {
+                r#type: Box::new(Value::Object {
+                    content: BTreeMap::default(),
+                    optional: false
+                }),
+                optional: false
+            }
+        );
+    }
+}
+
+#[cfg(test)]
+mod test_errors {
+    use crate::parser::Parser;
+
+    use super::*;
+
+    #[test]
+    fn parse_multiple_roots() {
+        let source = "123 true \"str\"";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `true \"str\"`: 4..14");
+    }
+
+    #[test]
+    fn parse_only_ws() {
+        let source = "         ";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `         `: 0..9");
+    }
+
+    #[test]
+    fn parse_only_mismatch() {
+        let source = "{ 123: 123 }";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `123: 123 }`: 2..12");
+    }
+
+    #[test]
+    fn parse_only_mismatch_unterminated_key() {
+        let source = "{ \"123: 123 }";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `\"123: 123 }`: 2..12");
+    }
+
+    #[test]
+    fn parse_unterminated_string() {
+        let source = "\"123";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `\"123`: 0..4");
+    }
+
+    #[test]
+    fn parse_uninit_string() {
+        let source = "123\"";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `\"`: 3..4");
+    }
+
+    #[test]
+    fn parse_invalid_number() {
+        let source = "123..43";
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let err = parse_cst(&cst, source).unwrap_err();
+
+        assert_eq!(err.to_string(), "invalid JSON `.`: 3..4");
+    }
 }
