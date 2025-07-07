@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = [ 
     "json_shape",
 ]
 resolver = "2"
@@ -14,3 +14,7 @@ wildcard_imports = { level = "deny", priority = 11 }
 missing_const_for_fn = { level = "deny" }
 option_if_let_else = { level = "deny" }
 or_fun_call = { level = "deny" }
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
+missing_docs = "deny"

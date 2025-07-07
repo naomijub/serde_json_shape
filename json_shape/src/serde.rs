@@ -1,6 +1,14 @@
 #![allow(clippy::fallible_impl_from)]
 use crate::Value as JsonShape;
 
+pub(crate) mod impls;
+
+/// Visitor navigating a [`serde_json::Value`] based on the respective [`JsonShape`]
+pub struct JsonVisitor<'json> {
+    value: &'json serde_json::Value,
+    shape: JsonShape,
+}
+
 impl From<serde_json::Value> for JsonShape {
     fn from(value: serde_json::Value) -> Self {
         match value {

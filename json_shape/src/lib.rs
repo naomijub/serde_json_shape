@@ -6,7 +6,8 @@ mod value;
 
 mod lexer;
 pub(crate) mod parser;
-pub(crate) mod serde;
+/// [`serde_json`] related functions and types
+pub mod serde;
 pub(crate) mod shape;
 
 use std::str::FromStr;
