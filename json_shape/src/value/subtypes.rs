@@ -10,6 +10,8 @@ pub struct Boolean;
 pub struct String;
 /// Simple helper phantom struct to determine if `JsonShape` is of specific subtype `Array`.
 pub struct Array;
+/// Simple helper phantom struct to determine if `JsonShape` is of specific subtype `Tuple`.
+pub struct Tuple;
 /// Simple helper phantom struct to determine if `JsonShape` is of specific subtype `Object`.
 pub struct Object;
 /// Simple helper phantom struct to determine if `JsonShape` is of specific subtype `OneOf`.
@@ -43,6 +45,14 @@ pub trait IsArrayOf<T>: private::Sealed {
     /// - `value.is_array_of::<Null>()`.
     #[allow(dead_code)]
     fn is_array_of(&self) -> bool;
+}
+
+/// Checks if [`JsonShape`] is a Tuple of `T` at position `i`
+pub trait IsTupleOf<T>: private::Sealed {
+    /// Checks if [`JsonShape`] is an Tuple of `T` at position `i`
+    /// - `value.is_tuple_of::<Null>(2)`.
+    #[allow(dead_code)]
+    fn is_tuple_of(&self, i: usize) -> bool;
 }
 
 /// Checks if [`JsonShape`] is `OneOf` containing `T`
@@ -85,6 +95,32 @@ impl IsArrayOf<Optional<Number>> for Value {
     fn is_array_of(&self) -> bool {
         if let Value::Array { r#type, .. } = self {
             matches!(**r#type, Value::Number { optional: true })
+        } else {
+            false
+        }
+    }
+}
+
+impl IsArrayOf<Tuple> for Value {
+    fn is_array_of(&self) -> bool {
+        if let Value::Array { r#type, .. } = self {
+            matches!(
+                **r#type,
+                Value::Tuple {
+                    optional: false,
+                    ..
+                }
+            )
+        } else {
+            false
+        }
+    }
+}
+
+impl IsArrayOf<Optional<Tuple>> for Value {
+    fn is_array_of(&self) -> bool {
+        if let Value::Array { r#type, .. } = self {
+            matches!(**r#type, Value::Tuple { optional: true, .. })
         } else {
             false
         }
@@ -310,6 +346,36 @@ impl IsOneOf<OneOf> for Value {
     }
 }
 
+impl IsOneOf<Tuple> for Value {
+    fn is_one_of(&self) -> bool {
+        if let Value::OneOf { variants, .. } = self {
+            variants.iter().any(|variant| {
+                matches!(
+                    &variant,
+                    &Value::Tuple {
+                        optional: false,
+                        ..
+                    }
+                )
+            })
+        } else {
+            false
+        }
+    }
+}
+
+impl IsOneOf<Optional<Tuple>> for Value {
+    fn is_one_of(&self) -> bool {
+        if let Value::OneOf { variants, .. } = self {
+            variants
+                .iter()
+                .any(|variant| matches!(&variant, &Value::Tuple { optional: true, .. }))
+        } else {
+            false
+        }
+    }
+}
+
 impl IsOneOf<Optional<Number>> for Value {
     fn is_one_of(&self) -> bool {
         if let Value::OneOf { variants, .. } = self {
@@ -456,6 +522,25 @@ impl IsObjectOf<Array> for Value {
     }
 }
 
+impl IsObjectOf<Tuple> for Value {
+    fn is_object_of(&self, key: &str) -> bool {
+        if let Value::Object { content, .. } = self {
+            content.iter().any(|(k, value)| {
+                k == key
+                    && matches!(
+                        &value,
+                        &Value::Tuple {
+                            optional: false,
+                            ..
+                        }
+                    )
+            })
+        } else {
+            false
+        }
+    }
+}
+
 impl IsObjectOf<Object> for Value {
     fn is_object_of(&self, key: &str) -> bool {
         if let Value::Object { content, .. } = self {
@@ -542,6 +627,18 @@ impl IsObjectOf<Optional<Array>> for Value {
     }
 }
 
+impl IsObjectOf<Optional<Tuple>> for Value {
+    fn is_object_of(&self, key: &str) -> bool {
+        if let Value::Object { content, .. } = self {
+            content.iter().any(|(k, value)| {
+                k == key && matches!(&value, &Value::Tuple { optional: true, .. })
+            })
+        } else {
+            false
+        }
+    }
+}
+
 impl IsObjectOf<Optional<Object>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
         if let Value::Object { content, .. } = self {
@@ -560,6 +657,155 @@ impl IsObjectOf<Optional<OneOf>> for Value {
             content.iter().any(|(k, value)| {
                 k == key && matches!(&value, &Value::OneOf { optional: true, .. })
             })
+        } else {
+            false
+        }
+    }
+}
+
+// Tuple
+impl IsTupleOf<Null> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            elements.get(i).is_some_and(|v| v == &Value::Null)
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Number> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::Number { optional: false }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Optional<Number>> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::Number { optional: true }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<String> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::String { optional: false }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Optional<String>> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::String { optional: true }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Boolean> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::Bool { optional: false }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Optional<Boolean>> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::Bool { optional: true }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Array> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(
+                elements.get(i),
+                Some(Value::Array {
+                    optional: false,
+                    ..
+                })
+            )
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Optional<Array>> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::Array { optional: true, .. }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Object> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(
+                elements.get(i),
+                Some(Value::Object {
+                    optional: false,
+                    ..
+                })
+            )
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Optional<Object>> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::Object { optional: true, .. }))
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<OneOf> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(
+                elements.get(i),
+                Some(Value::OneOf {
+                    optional: false,
+                    ..
+                })
+            )
+        } else {
+            false
+        }
+    }
+}
+
+impl IsTupleOf<Optional<OneOf>> for Value {
+    fn is_tuple_of(&self, i: usize) -> bool {
+        if let Value::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Value::OneOf { optional: true, .. }))
         } else {
             false
         }
@@ -588,6 +834,18 @@ mod tests {
             r#type: Box::new(Value::Number { optional: false }),
             optional: false
         }));
+        assert!(IsArrayOf::<Number>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: true
+        }));
+        assert!(IsArrayOf::<Optional<Number>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Optional<Number>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
         assert!(!IsArrayOf::<Number>::is_array_of(&Value::Array {
             r#type: Box::new(Value::Bool { optional: true }),
             optional: false
@@ -598,6 +856,18 @@ mod tests {
     fn is_array_of_string() {
         assert!(IsArrayOf::<String>::is_array_of(&Value::Array {
             r#type: Box::new(Value::String { optional: false }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<String>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::String { optional: true }),
+            optional: false
+        }));
+        assert!(IsArrayOf::<Optional<String>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::String { optional: true }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Optional<String>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
             optional: false
         }));
         assert!(!IsArrayOf::<String>::is_array_of(&Value::Array {
@@ -612,6 +882,20 @@ mod tests {
             r#type: Box::new(Value::Bool { optional: false }),
             optional: false
         }));
+        assert!(!IsArrayOf::<Boolean>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
+        assert!(IsArrayOf::<Optional<Boolean>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Optional<Boolean>>::is_array_of(
+            &Value::Array {
+                r#type: Box::new(Value::Number { optional: true }),
+                optional: false
+            }
+        ));
         assert!(!IsArrayOf::<Boolean>::is_array_of(&Value::Array {
             r#type: Box::new(Value::String { optional: true }),
             optional: false
