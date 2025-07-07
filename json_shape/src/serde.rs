@@ -98,37 +98,53 @@ mod tests {
     #[test]
     fn test_from_json_null() {
         let json = json!(null);
+        let ref_shape = JsonShape::from(&json);
         let shape = JsonShape::from(json);
         assert_eq!(shape, JsonShape::Null);
+        assert_eq!(ref_shape, JsonShape::Null);
     }
 
     #[test]
     fn test_from_json_number() {
         let json = json!(123.456);
+        let ref_shape = JsonShape::from(&json);
         let shape = JsonShape::from(json);
         assert_eq!(shape, JsonShape::Number { optional: false });
+        assert_eq!(ref_shape, JsonShape::Number { optional: false });
     }
 
     #[test]
     fn test_from_json_string() {
         let json = json!("string");
+        let ref_shape = JsonShape::from(&json);
         let shape = JsonShape::from(json);
         assert_eq!(shape, JsonShape::String { optional: false });
+        assert_eq!(ref_shape, JsonShape::String { optional: false });
     }
 
     #[test]
     fn test_from_json_bool() {
         let json = json!(true);
+        let ref_shape = JsonShape::from(&json);
         let shape = JsonShape::from(json);
         assert_eq!(shape, JsonShape::Bool { optional: false });
+        assert_eq!(ref_shape, JsonShape::Bool { optional: false });
     }
 
     #[test]
     fn test_from_json_array() {
         let json = json!([1, 2, 3]);
+        let ref_shape = JsonShape::from(&json);
         let shape = JsonShape::from(json);
         assert_eq!(
             shape,
+            JsonShape::Array {
+                r#type: Box::new(JsonShape::Number { optional: false }),
+                optional: false
+            }
+        );
+        assert_eq!(
+            ref_shape,
             JsonShape::Array {
                 r#type: Box::new(JsonShape::Number { optional: false }),
                 optional: false
@@ -139,9 +155,22 @@ mod tests {
     #[test]
     fn test_from_json_tuple() {
         let json = json!([1, "string", true, null]);
+        let ref_shape = JsonShape::from(&json);
         let shape = JsonShape::from(json);
         assert_eq!(
             shape,
+            JsonShape::Tuple {
+                elements: vec![
+                    JsonShape::Number { optional: false },
+                    JsonShape::String { optional: false },
+                    JsonShape::Bool { optional: false },
+                    JsonShape::Null
+                ],
+                optional: false
+            }
+        );
+        assert_eq!(
+            ref_shape,
             JsonShape::Tuple {
                 elements: vec![
                     JsonShape::Number { optional: false },

@@ -20,3 +20,24 @@ impl JsonVisitor<'_> {
         &self.shape
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_value_null() {
+        let value = serde_json::Value::Null;
+        let visitor = JsonVisitor::from(&value);
+        assert_eq!(visitor.value(), &value);
+        assert_eq!(visitor.shape(), &JsonShape::Null);
+    }
+
+    #[test]
+    fn from_value_number() {
+        let value = serde_json::Value::Number(3.into());
+        let visitor = JsonVisitor::from(&value);
+        assert_eq!(visitor.value(), &value);
+        assert_eq!(visitor.shape(), &JsonShape::Number { optional: false });
+    }
+}
