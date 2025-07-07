@@ -104,7 +104,13 @@ impl IsArrayOf<Optional<Number>> for Value {
 impl IsArrayOf<Tuple> for Value {
     fn is_array_of(&self) -> bool {
         if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Tuple { optional: false, .. })
+            matches!(
+                **r#type,
+                Value::Tuple {
+                    optional: false,
+                    ..
+                }
+            )
         } else {
             false
         }
@@ -361,15 +367,9 @@ impl IsOneOf<Tuple> for Value {
 impl IsOneOf<Optional<Tuple>> for Value {
     fn is_one_of(&self) -> bool {
         if let Value::OneOf { variants, .. } = self {
-            variants.iter().any(|variant| {
-                matches!(
-                    &variant,
-                    &Value::Tuple {
-                        optional: true,
-                        ..
-                    }
-                )
-            })
+            variants
+                .iter()
+                .any(|variant| matches!(&variant, &Value::Tuple { optional: true, .. }))
         } else {
             false
         }
@@ -666,7 +666,7 @@ impl IsObjectOf<Optional<OneOf>> for Value {
 // Tuple
 impl IsTupleOf<Null> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             elements.get(i).is_some_and(|v| v == &Value::Null)
         } else {
             false
@@ -676,7 +676,7 @@ impl IsTupleOf<Null> for Value {
 
 impl IsTupleOf<Number> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::Number { optional: false }))
         } else {
             false
@@ -686,7 +686,7 @@ impl IsTupleOf<Number> for Value {
 
 impl IsTupleOf<Optional<Number>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::Number { optional: true }))
         } else {
             false
@@ -696,7 +696,7 @@ impl IsTupleOf<Optional<Number>> for Value {
 
 impl IsTupleOf<String> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::String { optional: false }))
         } else {
             false
@@ -706,7 +706,7 @@ impl IsTupleOf<String> for Value {
 
 impl IsTupleOf<Optional<String>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::String { optional: true }))
         } else {
             false
@@ -716,7 +716,7 @@ impl IsTupleOf<Optional<String>> for Value {
 
 impl IsTupleOf<Boolean> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::Bool { optional: false }))
         } else {
             false
@@ -726,7 +726,7 @@ impl IsTupleOf<Boolean> for Value {
 
 impl IsTupleOf<Optional<Boolean>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::Bool { optional: true }))
         } else {
             false
@@ -736,10 +736,10 @@ impl IsTupleOf<Optional<Boolean>> for Value {
 
 impl IsTupleOf<Array> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(
-                elements.get(i), Some(
-                Value::Array {
+                elements.get(i),
+                Some(Value::Array {
                     optional: false,
                     ..
                 })
@@ -752,7 +752,7 @@ impl IsTupleOf<Array> for Value {
 
 impl IsTupleOf<Optional<Array>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::Array { optional: true, .. }))
         } else {
             false
@@ -762,10 +762,10 @@ impl IsTupleOf<Optional<Array>> for Value {
 
 impl IsTupleOf<Object> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(
-                elements.get(i), Some(
-                Value::Object {
+                elements.get(i),
+                Some(Value::Object {
                     optional: false,
                     ..
                 })
@@ -778,7 +778,7 @@ impl IsTupleOf<Object> for Value {
 
 impl IsTupleOf<Optional<Object>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::Object { optional: true, .. }))
         } else {
             false
@@ -788,8 +788,14 @@ impl IsTupleOf<Optional<Object>> for Value {
 
 impl IsTupleOf<OneOf> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
-            matches!(elements.get(i), Some(Value::OneOf { optional: false, ..}))
+        if let Value::Tuple { elements, .. } = self {
+            matches!(
+                elements.get(i),
+                Some(Value::OneOf {
+                    optional: false,
+                    ..
+                })
+            )
         } else {
             false
         }
@@ -798,7 +804,7 @@ impl IsTupleOf<OneOf> for Value {
 
 impl IsTupleOf<Optional<OneOf>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements , .. } = self {
+        if let Value::Tuple { elements, .. } = self {
             matches!(elements.get(i), Some(Value::OneOf { optional: true, .. }))
         } else {
             false
