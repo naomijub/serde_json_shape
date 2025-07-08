@@ -14,14 +14,14 @@ fn test_invalid_json_from_str() {
 
 #[test]
 fn test_empty_array_from_sources_should_return_empty_json_error() {
-    let sources: [&str; 0] = [];
+    let sources: [String; 0] = [];
     let result = JsonShape::from_sources(&sources).unwrap_err();
     assert_eq!(result.to_string(), "JSON content is empty");
 }
 
 #[test]
 fn test_incompatible_merge_from_sources() {
-    let sources = ["{\"a\": 1}", "{\"a\": \"string\"}"];
+    let sources = ["{\"a\": 1}".to_string(), "{\"a\": \"string\"}".to_string()];
     let result = JsonShape::from_sources(&sources);
     assert!(
         result.is_ok(),
@@ -64,7 +64,7 @@ fn test_is_subset_self() {
 
 #[test]
 fn test_nullable_field_merging() {
-    let sources = ["{\"a\": 1}", "{\"a\": null}"];
+    let sources = ["{\"a\": 1}".to_string(), "{\"a\": null}".to_string()];
     let result = JsonShape::from_sources(&sources).unwrap();
     let shape_json = serde_json::to_string_pretty(&result).unwrap();
     assert_eq!(
@@ -86,7 +86,7 @@ fn test_nullable_field_merging() {
 
 #[test]
 fn test_array_merging_with_mixed_types() {
-    let sources = ["[1, 2, 3]", "[\"string\", true]"];
+    let sources = ["[1, 2, 3]".to_string(), "[\"string\", true]".to_string()];
     let result = JsonShape::from_sources(&sources).unwrap();
     let shape_json = serde_json::to_string_pretty(&result).unwrap();
     assert_eq!(

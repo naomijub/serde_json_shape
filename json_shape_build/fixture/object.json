@@ -1,0 +1,32 @@
+{
+    "str": "this is a string",
+    "number": 123.456,
+    "bool_true": true,
+    "bool_false": false,
+    "nil": null,
+    "array": [
+        1,
+        2,
+        3,
+        4
+    ],
+    "tuple": [
+        123,
+        "string",
+        true
+    ],
+    "map": {
+        "a": "b",
+        "c": 123
+    },
+    "array of maps": [
+        {
+            "a": "b",
+            "c": 123
+        },
+        {
+            "a": "b",
+            "b": true
+        }
+    ]
+}

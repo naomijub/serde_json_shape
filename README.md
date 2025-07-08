@@ -84,7 +84,7 @@ Or add the following line to your Cargo.toml:
 
 ```toml
 [dependencies]
-json_shape = "0.1"
+json_shape = "0.5"
 ```
 
 ## Usage 
@@ -134,4 +134,29 @@ use serde_json::Value;
 let json_str = read_to_string("./testdata/rfc-9535-example-1.json").unwrap();
 let json: Value = serde_json::from_str(&json_str).unwrap();
 let shape_from_value = JsonShape::from(&json);
+```
+
+# Json_shape_build
+
+Auxiliary library to generate Data Structures from Json Sources:
+
+## Add dependency
+```toml
+[build-dependencies]
+json_shape_build = "0.1"
+```
+
+In your `build.rs`:
+```rust,ignore
+let dir = env!("CARGO_MANIFEST_DIR");
+let extension = "fixture/object.json";
+let path = std::path::Path::new(dir).join(extension);
+json_shape_build::compile_json("collection_name", &[path]);
+```
+
+To include in you project:
+```rust,ignore
+mod shapes {
+    json_shape_build::include_json_shape!("helloworld");
+}
 ```
