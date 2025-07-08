@@ -130,13 +130,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "json_shape"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "953f42c328b74b60d20e10932214d99c93de5f489cc8476f97955c4a009c1b63"
+dependencies = [
+ "codespan-reporting 0.12.0",
+ "lelwel",
+ "logos",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "json_shape_build"
 version = "0.1.0"
 dependencies = [
  "checksum",
  "codegen",
  "convert_case",
- "json_shape",
+ "json_shape 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_json",
 ]
