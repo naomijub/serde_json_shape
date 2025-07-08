@@ -1,10 +1,32 @@
-[workspace]
-members = [ 
-    "json_shape",
-]
-resolver = "2"
 
-[workspace.lints.clippy]
+[package]
+name = "json_shape"
+version = "0.4.1"
+edition = "2024"
+authors = ["Julia Naomi <jnboeira@outlook.com>",]
+description = "Rust library to handle JSON shape"
+readme = "README.md"
+license = "Apache-2.0"
+homepage = "https://github.com/naomijub/serde_json_shape"
+repository = "https://github.com/naomijub/serde_json_shape/json_shape"
+keywords = ["JSON", "serde", "shape", "serialization"]
+categories = ["encoding", "parser-implementations"]
+
+
+[dependencies]
+serde = { version = "1.0.194", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+logos = "0.15"
+codespan-reporting = "0.12"
+
+[dev-dependencies]
+insta = { version = "1.43.1", features = [] }
+
+[build-dependencies]
+lelwel = "0.8.0"
+
+[lints.clippy]
 pedantic = { level = "deny", priority = 5 }
 nursery = { level = "deny", priority = 4 }
 equatable_if_let = { level = "allow", priority = 11 }
@@ -15,6 +37,6 @@ missing_const_for_fn = { level = "deny" }
 option_if_let_else = { level = "deny" }
 or_fun_call = { level = "deny" }
 
-[workspace.lints.rust]
+[lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
 missing_docs = "deny"

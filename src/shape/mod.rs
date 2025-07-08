@@ -17,7 +17,7 @@ pub fn parse_cst(cst: &Cst<'_>, source: &str) -> Result<Value, Error> {
     };
 
     has_errors(cst, source, NodeRef::ROOT)?;
-    if cst.children(NodeRef::ROOT).count() > 1 {
+    if cst.children(NodeRef::ROOT).filter(|node_ref| !matches!(cst.get(*node_ref), Node::Token(Token::Whitespace | Token::Newline, _))).count() > 1 {
         if let Some(err) = cst
             .children(NodeRef::ROOT)
             .find(|node_ref| has_errors(cst, source, *node_ref).is_err())

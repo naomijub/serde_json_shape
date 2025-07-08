@@ -1,0 +1,5 @@
+---
+source: src/serde.rs
+expression: shape.to_string()
+---
+Object{a: Number, b: String, c: Array<Number>, d: Null, e: Boolean, f: Tuple(Number, Boolean, String), obj: Object{d: Number, e: String}, objs: Array<Object{a: Number, b: Option<String>, c: Option<Boolean>}>}

@@ -89,6 +89,7 @@ json_shape = "0.1"
 
 ## Usage 
 
+### From `String`
 ```rust
 use json_shape::JsonShape;
 use std::str::FromStr;
@@ -120,3 +121,16 @@ let json_shape = JsonShape::from_str(source).unwrap();
 ```
 
 * If multiple `JSON` sources are available, you may use [`JsonShape::from_sources`](https://docs.rs/json_shape/latest/json_shape/enum.JsonShape.html#method.from_sources), which expects a list of Json strings.
+
+### From `serde_json::Value`
+
+```rust
+use std::{fs::read_to_string, str::FromStr};
+
+use json_shape::JsonShape;
+use serde_json::Value;
+
+let json_str = read_to_string("./testdata/rfc-9535-example-1.json").unwrap();
+let json: Value = serde_json::from_str(&json_str).unwrap();
+let shape_from_value = JsonShape::from(&json);
+```

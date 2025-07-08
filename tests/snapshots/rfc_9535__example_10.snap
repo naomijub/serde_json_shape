@@ -1,0 +1,5 @@
+---
+source: tests/rfc_9535.rs
+expression: shape_from_value
+---
+Object{a: Null, b: Array<Null>, c: Array<Object{}>, null: Number}

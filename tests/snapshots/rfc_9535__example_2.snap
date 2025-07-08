@@ -1,0 +1,5 @@
+---
+source: tests/rfc_9535.rs
+expression: shape_from_value
+---
+Object{"'": Object{"@": Number}, o: Object{"j j": Object{"k.k": Number}}}
