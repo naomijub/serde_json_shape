@@ -11,41 +11,7 @@ pub struct JsonVisitor<'json> {
 
 impl From<serde_json::Value> for JsonShape {
     fn from(value: serde_json::Value) -> Self {
-        match value {
-            serde_json::Value::Null => JsonShape::Null,
-            serde_json::Value::Bool(_) => JsonShape::Bool { optional: false },
-            serde_json::Value::Number(_) => JsonShape::Number { optional: false },
-            serde_json::Value::String(_) => JsonShape::String { optional: false },
-            serde_json::Value::Array(values) => {
-                if values
-                    .windows(2)
-                    .map(|val| {
-                        (
-                            JsonShape::from(val.first().unwrap()),
-                            JsonShape::from(val.get(1).unwrap()),
-                        )
-                    })
-                    .all(|val| val.0 == val.1)
-                {
-                    JsonShape::Array {
-                        r#type: Box::new(JsonShape::from(values.first().unwrap())),
-                        optional: false,
-                    }
-                } else {
-                    JsonShape::Tuple {
-                        elements: values.into_iter().map(JsonShape::from).collect(),
-                        optional: false,
-                    }
-                }
-            }
-            serde_json::Value::Object(map) => JsonShape::Object {
-                content: map
-                    .into_iter()
-                    .map(|(k, v)| (k, JsonShape::from(v)))
-                    .collect(),
-                optional: false,
-            },
-        }
+        Self::from(&value)
     }
 }
 
@@ -57,24 +23,76 @@ impl From<&serde_json::Value> for JsonShape {
             serde_json::Value::Number(_) => JsonShape::Number { optional: false },
             serde_json::Value::String(_) => JsonShape::String { optional: false },
             serde_json::Value::Array(values) => {
-                if values
-                    .windows(2)
-                    .map(|val| {
-                        (
-                            JsonShape::from(val.first().unwrap()),
-                            JsonShape::from(val.get(1).unwrap()),
-                        )
-                    })
-                    .all(|val| val.0 == val.1)
+                if values.len() > 1
+                    && values
+                        .iter()
+                        .map(JsonShape::from)
+                        .all(|value| matches!(value, JsonShape::Object { .. }))
+                {
+                    let mut iter = values.iter().map(JsonShape::from);
+                    let Some(JsonShape::Object { content, .. }) = iter.next() else {
+                        unreachable!("Guaranteed to be Object by all");
+                    };
+                    let content = iter
+                        .clone()
+                        .filter(|shape| matches!(shape, JsonShape::Object { .. }))
+                        .filter_map(|content| {
+                            content.keys().map(|keys| keys.cloned().collect::<Vec<_>>())
+                        })
+                        .fold(content, |mut acc, keys| {
+                            for (key, value) in &mut acc {
+                                if !keys.iter().any(|k| k == key) {
+                                    value.to_optional_mut();
+                                }
+                            }
+                            acc
+                        });
+                    let object = iter.fold(content, |mut acc, content| {
+                        let JsonShape::Object { content, .. } = content else {
+                            return acc;
+                        };
+                        for (key, value) in content {
+                            let old_value = acc
+                                .entry(key.clone())
+                                .or_insert_with(|| value.clone().as_optional());
+                            if let JsonShape::OneOf { variants, .. } = old_value {
+                                variants.insert(value.clone());
+                            }
+                        }
+                        acc
+                    });
+
+                    JsonShape::Array {
+                        r#type: Box::new(JsonShape::Object {
+                            content: object,
+                            optional: false,
+                        }),
+                        optional: false,
+                    }
+                } else if values.len() == 1
+                    || values
+                        .windows(2)
+                        .map(|val| {
+                            (
+                                JsonShape::from(val.first().unwrap()),
+                                JsonShape::from(val.get(1).unwrap()),
+                            )
+                        })
+                        .all(|val| val.0 == val.1)
                 {
                     JsonShape::Array {
                         r#type: Box::new(JsonShape::from(values[0].clone())),
                         optional: false,
                     }
-                } else {
+                } else if values.len() > 1 {
                     JsonShape::Tuple {
                         elements: values.iter().map(JsonShape::from).collect(),
                         optional: false,
+                    }
+                } else {
+                    JsonShape::Array {
+                        r#type: Box::new(JsonShape::Null),
+                        optional: true,
                     }
                 }
             }

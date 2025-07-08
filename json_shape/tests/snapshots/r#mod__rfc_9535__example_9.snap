@@ -1,0 +1,5 @@
+---
+source: json_shape/tests/rfc_9535.rs
+expression: shape_from_value
+---
+Object{a: Tuple(Number, Number, Array<Object{j: Option<Number>, k: Option<Number>}>), o: Object{j: Number, k: Number}}

@@ -1,0 +1,5 @@
+---
+source: json_shape/tests/rfc_9535.rs
+expression: shape_from_value
+---
+Object{a: Tuple(Number, Number, Number, Number, Number, Number, Object{b: String}, Object{b: String}, Object{b: Object{}}, Object{b: String}), e: String, o: Object{p: Number, q: Number, r: Number, s: Number, t: Object{u: Number}}}
