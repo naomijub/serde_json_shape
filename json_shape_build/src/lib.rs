@@ -18,7 +18,7 @@ mod test;
 /// You must specify the json collections name.
 ///
 /// ```rust,ignore
-/// mod pb {
+/// mod shapes {
 ///     json_shape_build::include_json_shape!("helloworld");
 /// }
 /// ```
@@ -30,13 +30,13 @@ mod test;
 /// > instead of this macro.
 ///
 /// ```rust,ignore
-/// mod pb {
+/// mod shapes {
 ///     include!("/relative/json_shape/directory/helloworld.rs");
 /// }
 /// ```
 /// You can also use a custom environment variable using the following pattern.
 /// ```rust,ignore
-/// mod pb {
+/// mod shapes {
 ///     include!(concat!(env!("JSON_SHAPE_DIR"), "/helloworld.rs"));
 /// }
 /// ```
@@ -60,8 +60,8 @@ macro_rules! include_json_shape {
 /// In your `build.rs`:
 /// ```rust
 /// let dir = env!("CARGO_MANIFEST_DIR");
-/// let extesion = "fixture/object.json";
-/// let path = std::path::Path::new(dir).join(extesion);
+/// let extension = "fixture/object.json";
+/// let path = std::path::Path::new(dir).join(extension);
 /// json_shape_build::compile_json("collection_name", &[path]);
 /// ```
 ///

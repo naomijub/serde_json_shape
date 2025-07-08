@@ -27,8 +27,8 @@ pub struct Struct2CrcDEC58CB4 {
 #[test]
 fn codegen_large_object() {
     let dir = env!("CARGO_MANIFEST_DIR");
-    let extesion = "fixture/object.json";
-    let path = std::path::Path::new(dir).join(extesion);
+    let extension = "fixture/object.json";
+    let path = std::path::Path::new(dir).join(extension);
 
     let file = crate::compile_json("collection", &[path]).unwrap();
 
@@ -38,14 +38,14 @@ fn codegen_large_object() {
 #[test]
 fn codegen_oneof() {
     let dir = env!("CARGO_MANIFEST_DIR");
-    let extesion = "fixture/a.json";
-    let path_1 = std::path::Path::new(dir).join(extesion);
+    let extension = "fixture/a.json";
+    let path_1 = std::path::Path::new(dir).join(extension);
 
-    let extesion = "fixture/b.json";
-    let path_2 = std::path::Path::new(dir).join(extesion);
+    let extension = "fixture/b.json";
+    let path_2 = std::path::Path::new(dir).join(extension);
 
-    let extesion = "fixture/c.json";
-    let path_3 = std::path::Path::new(dir).join(extesion);
+    let extension = "fixture/c.json";
+    let path_3 = std::path::Path::new(dir).join(extension);
 
     let file = crate::compile_json("collection", &[path_1, path_2, path_3]).unwrap();
 
