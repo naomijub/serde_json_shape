@@ -2,7 +2,7 @@
 [![Latest Version](https://img.shields.io/crates/v/json_shape)](https://crates.io/crates/json_shape)
 [![License:Apache](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://github.com/naomijub/serde_json_shape/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/naomijub/serde_json_shape/actions/workflows/rust.yml)
-[![Coverage Status](https://coveralls.io/repos/github/naomijub/serde_json_shape/badge.svg)](https://coveralls.io/github/naomijub/serde_json_shape)
+[![Coverage Status](https://coveralls.io/repos/github/naomijub/serde_json_shape/badge.svg?branch=main)](https://coveralls.io/github/naomijub/serde_json_shape?branch=main)
 
 # JSON_Shape
 
