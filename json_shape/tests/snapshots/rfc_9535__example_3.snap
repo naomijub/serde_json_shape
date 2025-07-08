@@ -1,0 +1,5 @@
+---
+source: json_shape/tests/rfc_9535.rs
+expression: shape_from_value
+---
+Object{a: Array<Number>, o: Object{j: Number, k: Number}}

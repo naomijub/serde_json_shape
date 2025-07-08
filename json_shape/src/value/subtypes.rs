@@ -846,6 +846,18 @@ mod tests {
             r#type: Box::new(Value::Bool { optional: true }),
             optional: false
         }));
+        assert!(IsArrayOf::<Number>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Number { optional: false }),
+            optional: true
+        }));
+        assert!(IsArrayOf::<Optional<Number>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Number { optional: true }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Optional<Number>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
         assert!(!IsArrayOf::<Number>::is_array_of(&Value::Array {
             r#type: Box::new(Value::Bool { optional: true }),
             optional: false
@@ -856,6 +868,18 @@ mod tests {
     fn is_array_of_string() {
         assert!(IsArrayOf::<String>::is_array_of(&Value::Array {
             r#type: Box::new(Value::String { optional: false }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<String>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::String { optional: true }),
+            optional: false
+        }));
+        assert!(IsArrayOf::<Optional<String>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::String { optional: true }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Optional<String>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
             optional: false
         }));
         assert!(!IsArrayOf::<String>::is_array_of(&Value::Array {
@@ -882,6 +906,20 @@ mod tests {
             r#type: Box::new(Value::Bool { optional: false }),
             optional: false
         }));
+        assert!(!IsArrayOf::<Boolean>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
+        assert!(IsArrayOf::<Optional<Boolean>>::is_array_of(&Value::Array {
+            r#type: Box::new(Value::Bool { optional: true }),
+            optional: false
+        }));
+        assert!(!IsArrayOf::<Optional<Boolean>>::is_array_of(
+            &Value::Array {
+                r#type: Box::new(Value::Number { optional: true }),
+                optional: false
+            }
+        ));
         assert!(!IsArrayOf::<Boolean>::is_array_of(&Value::Array {
             r#type: Box::new(Value::Bool { optional: true }),
             optional: false
