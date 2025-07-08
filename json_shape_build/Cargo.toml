@@ -2,6 +2,14 @@
 name = "json_shape_build"
 version = "0.1.0"
 edition = "2024"
+authors = ["Julia Naomi <jnboeira@outlook.com>",]
+description = "Rust library to build JSON shape data structures"
+readme = "../README.md"
+license = "Apache-2.0"
+homepage = "https://github.com/naomijub/serde_json_shape"
+repository = "https://github.com/naomijub/serde_json_shape/json_shape"
+keywords = ["JSON", "serde", "shape", "build"]
+categories = ["encoding", "parser-implementations"]
 
 [dependencies]
 checksum = "0.2.1"
