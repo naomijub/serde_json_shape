@@ -147,7 +147,7 @@ json_shape_build = "0.1"
 ```
 
 In your `build.rs`:
-```rust
+```rust,ignore
 let dir = env!("CARGO_MANIFEST_DIR");
 let extension = "fixture/object.json";
 let path = std::path::Path::new(dir).join(extension);

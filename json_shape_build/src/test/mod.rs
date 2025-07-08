@@ -1,3 +1,4 @@
+mod from_shape;
 static LARGE_OBJECT: &str = "#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Struct9Crc477AE068 {
     pub array: Vec<f64>,

@@ -90,6 +90,16 @@ pub fn compile_json(
 
     let mut scope = Scope::new();
 
+    first_pass(&shape, &mut scope);
+    let content = format!(
+        "//! Generated `JsonShape` file.\nuse serde;\n\n{}",
+        scope.to_string()
+    );
+    std::fs::write(target, content)?;
+    Ok(scope.to_string())
+}
+
+pub(crate) fn first_pass(shape: &JsonShape, scope: &mut Scope) {
     match &shape {
         json_shape::JsonShape::Null => {
             scope.new_type_alias("Void", "()").vis("pub");
@@ -125,38 +135,32 @@ pub fn compile_json(
             r#type: inner,
             optional,
         } => {
-            let name = shape_name(&shape);
-            create_array(&mut scope, &name, *optional, inner);
-            create_subtype(&mut scope, inner);
+            let name = shape_name(shape);
+            create_array(scope, &name, *optional, inner);
+            create_subtype(scope, inner);
         }
         json_shape::JsonShape::Object { content, .. } => {
-            let name = shape_name(&shape);
-            create_object(&mut scope, &name, content);
+            let name = shape_name(shape);
+            create_object(scope, &name, content);
             for inner in content.values() {
-                create_subtype(&mut scope, inner);
+                create_subtype(scope, inner);
             }
         }
         json_shape::JsonShape::OneOf { variants, .. } => {
-            let name = shape_name(&shape);
-            create_enum(&mut scope, &name, variants);
+            let name = shape_name(shape);
+            create_enum(scope, &name, variants);
             for inner in variants {
-                create_subtype(&mut scope, inner);
+                create_subtype(scope, inner);
             }
         }
         json_shape::JsonShape::Tuple { elements, optional } => {
-            let name = shape_name(&shape);
-            create_tuple(&mut scope, &name, *optional, elements);
+            let name = shape_name(shape);
+            create_tuple(scope, &name, *optional, elements);
             for inner in elements {
-                create_subtype(&mut scope, inner);
+                create_subtype(scope, inner);
             }
         }
     }
-    let content = format!(
-        "//! Generated `JsonShape` file.\nuse serde;\n\n{}",
-        scope.to_string()
-    );
-    std::fs::write(target, content)?;
-    Ok(scope.to_string())
 }
 
 fn create_subtype(scope: &mut Scope, shape: &JsonShape) {
