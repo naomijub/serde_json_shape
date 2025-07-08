@@ -1,6 +1,6 @@
 [workspace]
 members = [ 
-    "json_shape",
+    "json_shape", "json_shape_build"
 ]
 resolver = "2"
 

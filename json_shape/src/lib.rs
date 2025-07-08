@@ -48,12 +48,11 @@ impl Value {
     /// # Errors
     ///
     /// Will return `Err` if failed to parse Json or if shapes don't align.
-    pub fn from_sources(sources: &[&str]) -> Result<Self, Error> {
+    pub fn from_sources(sources: &[String]) -> Result<Self, Error> {
         let mut diags = Vec::new();
         let mut values = Vec::new();
         for source in sources {
             let cst = Parser::parse(source, &mut diags);
-
             values.push(parse_cst(&cst, source)?);
         }
 

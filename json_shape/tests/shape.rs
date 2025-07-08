@@ -227,7 +227,8 @@ fn complex_json_shape_from_sources() {
                 "c": 123
             }
         ]
-    }"#;
+    }"#
+    .to_string();
 
     let source_2 = r#"{
         "str": "this is a string",
@@ -245,7 +246,8 @@ fn complex_json_shape_from_sources() {
                 "b": true
             }
         ]
-    }"#;
+    }"#
+    .to_string();
 
     let shape = JsonShape::from_sources(&[source_1, source_2]).unwrap();
 
