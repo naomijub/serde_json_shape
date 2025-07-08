@@ -119,9 +119,10 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 [[package]]
 name = "json_shape"
 version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "953f42c328b74b60d20e10932214d99c93de5f489cc8476f97955c4a009c1b63"
 dependencies = [
  "codespan-reporting 0.12.0",
- "insta",
  "lelwel",
  "logos",
  "serde",
@@ -131,11 +132,10 @@ dependencies = [
 
 [[package]]
 name = "json_shape"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "953f42c328b74b60d20e10932214d99c93de5f489cc8476f97955c4a009c1b63"
+version = "0.5.1"
 dependencies = [
  "codespan-reporting 0.12.0",
+ "insta",
  "lelwel",
  "logos",
  "serde",
@@ -150,7 +150,7 @@ dependencies = [
  "checksum",
  "codegen",
  "convert_case",
- "json_shape 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "json_shape 0.5.0",
  "serde",
  "serde_json",
 ]

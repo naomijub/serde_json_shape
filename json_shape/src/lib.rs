@@ -1,4 +1,7 @@
-#![doc = include_str!("../../README.md")]
+//! `JsonShape` library:
+//! Library to enable json shape manipulation from json sources or `serde_json::Values`.
+//! Check Readme for more info on usage.
+
 #![allow(clippy::redundant_pub_crate)]
 /// Module containing Error types
 pub mod error;
