@@ -29,9 +29,9 @@ mod private {
 
 impl Value {
     #[must_use]
-    /// Cheecks if [`JsonShape::Tuple`] is tuple containing `&[JsonShape]` in the same order and type.
-    pub fn is_tuple_of(&self, types: &[Value]) -> bool {
-        if let Value::Tuple { elements, .. } = self {
+    /// Checks if [`JsonShape::Tuple`] is tuple containing `&[JsonShape]` in the same order and type.
+    pub fn is_tuple_of(&self, types: &[Self]) -> bool {
+        if let Self::Tuple { elements, .. } = self {
             elements.len() == types.len() && elements.iter().zip(types.iter()).all(|(a, b)| a == b)
         } else {
             false
@@ -73,8 +73,8 @@ pub trait IsObjectOf<T>: private::Sealed {
 // ARRAY
 impl IsArrayOf<Null> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            **r#type == Value::Null
+        if let Self::Array { r#type, .. } = self {
+            **r#type == Self::Null
         } else {
             false
         }
@@ -83,8 +83,8 @@ impl IsArrayOf<Null> for Value {
 
 impl IsArrayOf<Number> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Number { optional: false })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Number { optional: false })
         } else {
             false
         }
@@ -93,8 +93,8 @@ impl IsArrayOf<Number> for Value {
 
 impl IsArrayOf<Optional<Number>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Number { optional: true })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Number { optional: true })
         } else {
             false
         }
@@ -103,10 +103,10 @@ impl IsArrayOf<Optional<Number>> for Value {
 
 impl IsArrayOf<Tuple> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
+        if let Self::Array { r#type, .. } = self {
             matches!(
                 **r#type,
-                Value::Tuple {
+                Self::Tuple {
                     optional: false,
                     ..
                 }
@@ -119,8 +119,8 @@ impl IsArrayOf<Tuple> for Value {
 
 impl IsArrayOf<Optional<Tuple>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Tuple { optional: true, .. })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Tuple { optional: true, .. })
         } else {
             false
         }
@@ -129,8 +129,8 @@ impl IsArrayOf<Optional<Tuple>> for Value {
 
 impl IsArrayOf<String> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::String { optional: false })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::String { optional: false })
         } else {
             false
         }
@@ -139,8 +139,8 @@ impl IsArrayOf<String> for Value {
 
 impl IsArrayOf<Optional<String>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::String { optional: true })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::String { optional: true })
         } else {
             false
         }
@@ -149,8 +149,8 @@ impl IsArrayOf<Optional<String>> for Value {
 
 impl IsArrayOf<Boolean> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Bool { optional: false })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Bool { optional: false })
         } else {
             false
         }
@@ -159,8 +159,8 @@ impl IsArrayOf<Boolean> for Value {
 
 impl IsArrayOf<Optional<Boolean>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Bool { optional: true })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Bool { optional: true })
         } else {
             false
         }
@@ -169,10 +169,10 @@ impl IsArrayOf<Optional<Boolean>> for Value {
 
 impl IsArrayOf<Array> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
+        if let Self::Array { r#type, .. } = self {
             matches!(
                 **r#type,
-                Value::Array {
+                Self::Array {
                     optional: false,
                     ..
                 }
@@ -185,8 +185,8 @@ impl IsArrayOf<Array> for Value {
 
 impl IsArrayOf<Optional<Array>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Array { optional: true, .. })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Array { optional: true, .. })
         } else {
             false
         }
@@ -195,10 +195,10 @@ impl IsArrayOf<Optional<Array>> for Value {
 
 impl IsArrayOf<Object> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
+        if let Self::Array { r#type, .. } = self {
             matches!(
                 **r#type,
-                Value::Object {
+                Self::Object {
                     optional: false,
                     ..
                 }
@@ -211,8 +211,8 @@ impl IsArrayOf<Object> for Value {
 
 impl IsArrayOf<Optional<Object>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::Object { optional: true, .. })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::Object { optional: true, .. })
         } else {
             false
         }
@@ -221,10 +221,10 @@ impl IsArrayOf<Optional<Object>> for Value {
 
 impl IsArrayOf<OneOf> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
+        if let Self::Array { r#type, .. } = self {
             matches!(
                 **r#type,
-                Value::OneOf {
+                Self::OneOf {
                     optional: false,
                     ..
                 }
@@ -237,8 +237,8 @@ impl IsArrayOf<OneOf> for Value {
 
 impl IsArrayOf<Optional<OneOf>> for Value {
     fn is_array_of(&self) -> bool {
-        if let Value::Array { r#type, .. } = self {
-            matches!(**r#type, Value::OneOf { optional: true, .. })
+        if let Self::Array { r#type, .. } = self {
+            matches!(**r#type, Self::OneOf { optional: true, .. })
         } else {
             false
         }
@@ -248,8 +248,8 @@ impl IsArrayOf<Optional<OneOf>> for Value {
 // OneOf
 impl IsOneOf<Null> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
-            variants.contains(&Value::Null)
+        if let Self::OneOf { variants, .. } = self {
+            variants.contains(&Self::Null)
         } else {
             false
         }
@@ -258,10 +258,10 @@ impl IsOneOf<Null> for Value {
 
 impl IsOneOf<Number> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Number { optional: false }))
+                .any(|variant| matches!(&variant, &Self::Number { optional: false }))
         } else {
             false
         }
@@ -270,10 +270,10 @@ impl IsOneOf<Number> for Value {
 
 impl IsOneOf<String> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::String { optional: false }))
+                .any(|variant| matches!(&variant, &Self::String { optional: false }))
         } else {
             false
         }
@@ -282,10 +282,10 @@ impl IsOneOf<String> for Value {
 
 impl IsOneOf<Boolean> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Bool { optional: false }))
+                .any(|variant| matches!(&variant, &Self::Bool { optional: false }))
         } else {
             false
         }
@@ -294,11 +294,11 @@ impl IsOneOf<Boolean> for Value {
 
 impl IsOneOf<Array> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants.iter().any(|variant| {
                 matches!(
                     &variant,
-                    &Value::Array {
+                    &Self::Array {
                         optional: false,
                         ..
                     }
@@ -312,11 +312,11 @@ impl IsOneOf<Array> for Value {
 
 impl IsOneOf<Object> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants.iter().any(|variant| {
                 matches!(
                     &variant,
-                    &Value::Object {
+                    &Self::Object {
                         optional: false,
                         ..
                     }
@@ -330,11 +330,11 @@ impl IsOneOf<Object> for Value {
 
 impl IsOneOf<OneOf> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants.iter().any(|variant| {
                 matches!(
                     &variant,
-                    &Value::OneOf {
+                    &Self::OneOf {
                         optional: false,
                         ..
                     }
@@ -348,11 +348,11 @@ impl IsOneOf<OneOf> for Value {
 
 impl IsOneOf<Tuple> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants.iter().any(|variant| {
                 matches!(
                     &variant,
-                    &Value::Tuple {
+                    &Self::Tuple {
                         optional: false,
                         ..
                     }
@@ -366,10 +366,10 @@ impl IsOneOf<Tuple> for Value {
 
 impl IsOneOf<Optional<Tuple>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Tuple { optional: true, .. }))
+                .any(|variant| matches!(&variant, &Self::Tuple { optional: true, .. }))
         } else {
             false
         }
@@ -378,11 +378,11 @@ impl IsOneOf<Optional<Tuple>> for Value {
 
 impl IsOneOf<Optional<Number>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Number { .. }))
-                && variants.contains(&Value::Null)
+                .any(|variant| matches!(&variant, &Self::Number { .. }))
+                && variants.contains(&Self::Null)
         } else {
             false
         }
@@ -391,11 +391,11 @@ impl IsOneOf<Optional<Number>> for Value {
 
 impl IsOneOf<Optional<String>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::String { .. }))
-                && variants.contains(&Value::Null)
+                .any(|variant| matches!(&variant, &Self::String { .. }))
+                && variants.contains(&Self::Null)
         } else {
             false
         }
@@ -404,11 +404,11 @@ impl IsOneOf<Optional<String>> for Value {
 
 impl IsOneOf<Optional<Boolean>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Bool { .. }))
-                && variants.contains(&Value::Null)
+                .any(|variant| matches!(&variant, &Self::Bool { .. }))
+                && variants.contains(&Self::Null)
         } else {
             false
         }
@@ -417,11 +417,11 @@ impl IsOneOf<Optional<Boolean>> for Value {
 
 impl IsOneOf<Optional<Array>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Array { .. }))
-                && variants.contains(&Value::Null)
+                .any(|variant| matches!(&variant, &Self::Array { .. }))
+                && variants.contains(&Self::Null)
         } else {
             false
         }
@@ -430,11 +430,11 @@ impl IsOneOf<Optional<Array>> for Value {
 
 impl IsOneOf<Optional<Object>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, .. } = self {
+        if let Self::OneOf { variants, .. } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::Object { .. }))
-                && variants.contains(&Value::Null)
+                .any(|variant| matches!(&variant, &Self::Object { .. }))
+                && variants.contains(&Self::Null)
         } else {
             false
         }
@@ -443,10 +443,10 @@ impl IsOneOf<Optional<Object>> for Value {
 
 impl IsOneOf<Optional<OneOf>> for Value {
     fn is_one_of(&self) -> bool {
-        if let Value::OneOf { variants, optional } = self {
+        if let Self::OneOf { variants, optional } = self {
             variants
                 .iter()
-                .any(|variant| matches!(&variant, &Value::OneOf { optional: true, .. }))
+                .any(|variant| matches!(&variant, &Self::OneOf { optional: true, .. }))
                 || *optional
         } else {
             false
@@ -457,10 +457,10 @@ impl IsOneOf<Optional<OneOf>> for Value {
 // Object
 impl IsObjectOf<Null> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::Null))
+                .any(|(k, value)| k == key && matches!(&value, &Self::Null))
         } else {
             false
         }
@@ -469,10 +469,10 @@ impl IsObjectOf<Null> for Value {
 
 impl IsObjectOf<Number> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::Number { optional: false }))
+                .any(|(k, value)| k == key && matches!(&value, &Self::Number { optional: false }))
         } else {
             false
         }
@@ -481,10 +481,10 @@ impl IsObjectOf<Number> for Value {
 
 impl IsObjectOf<String> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::String { optional: false }))
+                .any(|(k, value)| k == key && matches!(&value, &Self::String { optional: false }))
         } else {
             false
         }
@@ -493,10 +493,10 @@ impl IsObjectOf<String> for Value {
 
 impl IsObjectOf<Boolean> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::Bool { optional: false }))
+                .any(|(k, value)| k == key && matches!(&value, &Self::Bool { optional: false }))
         } else {
             false
         }
@@ -505,12 +505,12 @@ impl IsObjectOf<Boolean> for Value {
 
 impl IsObjectOf<Array> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content.iter().any(|(k, value)| {
                 k == key
                     && matches!(
                         &value,
-                        &Value::Array {
+                        &Self::Array {
                             optional: false,
                             ..
                         }
@@ -524,12 +524,12 @@ impl IsObjectOf<Array> for Value {
 
 impl IsObjectOf<Tuple> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content.iter().any(|(k, value)| {
                 k == key
                     && matches!(
                         &value,
-                        &Value::Tuple {
+                        &Self::Tuple {
                             optional: false,
                             ..
                         }
@@ -543,12 +543,12 @@ impl IsObjectOf<Tuple> for Value {
 
 impl IsObjectOf<Object> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content.iter().any(|(k, value)| {
                 k == key
                     && matches!(
                         &value,
-                        &Value::Object {
+                        &Self::Object {
                             optional: false,
                             ..
                         }
@@ -562,12 +562,12 @@ impl IsObjectOf<Object> for Value {
 
 impl IsObjectOf<OneOf> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content.iter().any(|(k, value)| {
                 k == key
                     && matches!(
                         &value,
-                        &Value::OneOf {
+                        &Self::OneOf {
                             optional: false,
                             ..
                         }
@@ -581,10 +581,10 @@ impl IsObjectOf<OneOf> for Value {
 
 impl IsObjectOf<Optional<Number>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::Number { optional: true }))
+                .any(|(k, value)| k == key && matches!(&value, &Self::Number { optional: true }))
         } else {
             false
         }
@@ -593,10 +593,10 @@ impl IsObjectOf<Optional<Number>> for Value {
 
 impl IsObjectOf<Optional<String>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::String { optional: true }))
+                .any(|(k, value)| k == key && matches!(&value, &Self::String { optional: true }))
         } else {
             false
         }
@@ -605,10 +605,10 @@ impl IsObjectOf<Optional<String>> for Value {
 
 impl IsObjectOf<Optional<Boolean>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content
                 .iter()
-                .any(|(k, value)| k == key && matches!(&value, &Value::Bool { optional: true }))
+                .any(|(k, value)| k == key && matches!(&value, &Self::Bool { optional: true }))
         } else {
             false
         }
@@ -617,10 +617,10 @@ impl IsObjectOf<Optional<Boolean>> for Value {
 
 impl IsObjectOf<Optional<Array>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
-            content.iter().any(|(k, value)| {
-                k == key && matches!(&value, &Value::Array { optional: true, .. })
-            })
+        if let Self::Object { content, .. } = self {
+            content
+                .iter()
+                .any(|(k, value)| k == key && matches!(&value, &Self::Array { optional: true, .. }))
         } else {
             false
         }
@@ -629,10 +629,10 @@ impl IsObjectOf<Optional<Array>> for Value {
 
 impl IsObjectOf<Optional<Tuple>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
-            content.iter().any(|(k, value)| {
-                k == key && matches!(&value, &Value::Tuple { optional: true, .. })
-            })
+        if let Self::Object { content, .. } = self {
+            content
+                .iter()
+                .any(|(k, value)| k == key && matches!(&value, &Self::Tuple { optional: true, .. }))
         } else {
             false
         }
@@ -641,9 +641,9 @@ impl IsObjectOf<Optional<Tuple>> for Value {
 
 impl IsObjectOf<Optional<Object>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
+        if let Self::Object { content, .. } = self {
             content.iter().any(|(k, value)| {
-                k == key && matches!(&value, &Value::Object { optional: true, .. })
+                k == key && matches!(&value, &Self::Object { optional: true, .. })
             })
         } else {
             false
@@ -653,10 +653,10 @@ impl IsObjectOf<Optional<Object>> for Value {
 
 impl IsObjectOf<Optional<OneOf>> for Value {
     fn is_object_of(&self, key: &str) -> bool {
-        if let Value::Object { content, .. } = self {
-            content.iter().any(|(k, value)| {
-                k == key && matches!(&value, &Value::OneOf { optional: true, .. })
-            })
+        if let Self::Object { content, .. } = self {
+            content
+                .iter()
+                .any(|(k, value)| k == key && matches!(&value, &Self::OneOf { optional: true, .. }))
         } else {
             false
         }
@@ -666,8 +666,8 @@ impl IsObjectOf<Optional<OneOf>> for Value {
 // Tuple
 impl IsTupleOf<Null> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            elements.get(i).is_some_and(|v| v == &Value::Null)
+        if let Self::Tuple { elements, .. } = self {
+            elements.get(i).is_some_and(|v| v == &Self::Null)
         } else {
             false
         }
@@ -676,8 +676,8 @@ impl IsTupleOf<Null> for Value {
 
 impl IsTupleOf<Number> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::Number { optional: false }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::Number { optional: false }))
         } else {
             false
         }
@@ -686,8 +686,8 @@ impl IsTupleOf<Number> for Value {
 
 impl IsTupleOf<Optional<Number>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::Number { optional: true }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::Number { optional: true }))
         } else {
             false
         }
@@ -696,8 +696,8 @@ impl IsTupleOf<Optional<Number>> for Value {
 
 impl IsTupleOf<String> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::String { optional: false }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::String { optional: false }))
         } else {
             false
         }
@@ -706,8 +706,8 @@ impl IsTupleOf<String> for Value {
 
 impl IsTupleOf<Optional<String>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::String { optional: true }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::String { optional: true }))
         } else {
             false
         }
@@ -716,8 +716,8 @@ impl IsTupleOf<Optional<String>> for Value {
 
 impl IsTupleOf<Boolean> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::Bool { optional: false }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::Bool { optional: false }))
         } else {
             false
         }
@@ -726,8 +726,8 @@ impl IsTupleOf<Boolean> for Value {
 
 impl IsTupleOf<Optional<Boolean>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::Bool { optional: true }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::Bool { optional: true }))
         } else {
             false
         }
@@ -736,10 +736,10 @@ impl IsTupleOf<Optional<Boolean>> for Value {
 
 impl IsTupleOf<Array> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
+        if let Self::Tuple { elements, .. } = self {
             matches!(
                 elements.get(i),
-                Some(Value::Array {
+                Some(Self::Array {
                     optional: false,
                     ..
                 })
@@ -752,8 +752,8 @@ impl IsTupleOf<Array> for Value {
 
 impl IsTupleOf<Optional<Array>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::Array { optional: true, .. }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::Array { optional: true, .. }))
         } else {
             false
         }
@@ -762,10 +762,10 @@ impl IsTupleOf<Optional<Array>> for Value {
 
 impl IsTupleOf<Object> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
+        if let Self::Tuple { elements, .. } = self {
             matches!(
                 elements.get(i),
-                Some(Value::Object {
+                Some(Self::Object {
                     optional: false,
                     ..
                 })
@@ -778,8 +778,8 @@ impl IsTupleOf<Object> for Value {
 
 impl IsTupleOf<Optional<Object>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::Object { optional: true, .. }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::Object { optional: true, .. }))
         } else {
             false
         }
@@ -788,10 +788,10 @@ impl IsTupleOf<Optional<Object>> for Value {
 
 impl IsTupleOf<OneOf> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
+        if let Self::Tuple { elements, .. } = self {
             matches!(
                 elements.get(i),
-                Some(Value::OneOf {
+                Some(Self::OneOf {
                     optional: false,
                     ..
                 })
@@ -804,8 +804,8 @@ impl IsTupleOf<OneOf> for Value {
 
 impl IsTupleOf<Optional<OneOf>> for Value {
     fn is_tuple_of(&self, i: usize) -> bool {
-        if let Value::Tuple { elements, .. } = self {
-            matches!(elements.get(i), Some(Value::OneOf { optional: true, .. }))
+        if let Self::Tuple { elements, .. } = self {
+            matches!(elements.get(i), Some(Self::OneOf { optional: true, .. }))
         } else {
             false
         }

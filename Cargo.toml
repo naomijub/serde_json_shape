@@ -5,15 +5,16 @@ members = [
 resolver = "2"
 
 [workspace.lints.clippy]
-pedantic = { level = "deny", priority = 5 }
-nursery = { level = "deny", priority = 4 }
-equatable_if_let = { level = "allow", priority = 11 }
-similar_names = { level = "allow", priority = 11 }
-use_self = { level = "allow", priority = 11 }
-wildcard_imports = { level = "deny", priority = 11 }
-missing_const_for_fn = { level = "deny" }
-option_if_let_else = { level = "deny" }
-or_fun_call = { level = "deny" }
+all = "deny"
+pedantic = "deny"
+nursery = "deny"
+equatable_if_let = "deny"
+similar_names = "deny"
+use_self = "deny"
+wildcard_imports = "deny"
+missing_const_for_fn = "deny"
+option_if_let_else = "deny"
+or_fun_call = "deny"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
