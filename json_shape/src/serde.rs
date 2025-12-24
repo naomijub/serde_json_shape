@@ -18,24 +18,24 @@ impl From<serde_json::Value> for JsonShape {
 impl From<&serde_json::Value> for JsonShape {
     fn from(value: &serde_json::Value) -> Self {
         match value {
-            serde_json::Value::Null => JsonShape::Null,
-            serde_json::Value::Bool(_) => JsonShape::Bool { optional: false },
-            serde_json::Value::Number(_) => JsonShape::Number { optional: false },
-            serde_json::Value::String(_) => JsonShape::String { optional: false },
+            serde_json::Value::Null => Self::Null,
+            serde_json::Value::Bool(_) => Self::Bool { optional: false },
+            serde_json::Value::Number(_) => Self::Number { optional: false },
+            serde_json::Value::String(_) => Self::String { optional: false },
             serde_json::Value::Array(values) => {
                 if values.len() > 1
                     && values
                         .iter()
-                        .map(JsonShape::from)
-                        .all(|value| matches!(value, JsonShape::Object { .. }))
+                        .map(Self::from)
+                        .all(|value| matches!(value, Self::Object { .. }))
                 {
-                    let mut iter = values.iter().map(JsonShape::from);
-                    let Some(JsonShape::Object { content, .. }) = iter.next() else {
+                    let mut iter = values.iter().map(Self::from);
+                    let Some(Self::Object { content, .. }) = iter.next() else {
                         unreachable!("Guaranteed to be Object by all");
                     };
                     let content = iter
                         .clone()
-                        .filter(|shape| matches!(shape, JsonShape::Object { .. }))
+                        .filter(|shape| matches!(shape, Self::Object { .. }))
                         .filter_map(|content| {
                             content.keys().map(|keys| keys.cloned().collect::<Vec<_>>())
                         })
@@ -48,22 +48,22 @@ impl From<&serde_json::Value> for JsonShape {
                             acc
                         });
                     let object = iter.fold(content, |mut acc, content| {
-                        let JsonShape::Object { content, .. } = content else {
+                        let Self::Object { content, .. } = content else {
                             return acc;
                         };
                         for (key, value) in content {
                             let old_value = acc
                                 .entry(key.clone())
                                 .or_insert_with(|| value.clone().as_optional());
-                            if let JsonShape::OneOf { variants, .. } = old_value {
+                            if let Self::OneOf { variants, .. } = old_value {
                                 variants.insert(value.clone());
                             }
                         }
                         acc
                     });
 
-                    JsonShape::Array {
-                        r#type: Box::new(JsonShape::Object {
+                    Self::Array {
+                        r#type: Box::new(Self::Object {
                             content: object,
                             optional: false,
                         }),
@@ -74,32 +74,32 @@ impl From<&serde_json::Value> for JsonShape {
                         .windows(2)
                         .map(|val| {
                             (
-                                JsonShape::from(val.first().unwrap()),
-                                JsonShape::from(val.get(1).unwrap()),
+                                Self::from(val.first().unwrap()),
+                                Self::from(val.get(1).unwrap()),
                             )
                         })
                         .all(|val| val.0 == val.1)
                 {
-                    JsonShape::Array {
-                        r#type: Box::new(JsonShape::from(values[0].clone())),
+                    Self::Array {
+                        r#type: Box::new(Self::from(values[0].clone())),
                         optional: false,
                     }
                 } else if values.len() > 1 {
-                    JsonShape::Tuple {
-                        elements: values.iter().map(JsonShape::from).collect(),
+                    Self::Tuple {
+                        elements: values.iter().map(Self::from).collect(),
                         optional: false,
                     }
                 } else {
-                    JsonShape::Array {
-                        r#type: Box::new(JsonShape::Null),
+                    Self::Array {
+                        r#type: Box::new(Self::Null),
                         optional: true,
                     }
                 }
             }
-            serde_json::Value::Object(map) => JsonShape::Object {
+            serde_json::Value::Object(map) => Self::Object {
                 content: map
                     .into_iter()
-                    .map(|(k, v)| (k.to_string(), JsonShape::from(v)))
+                    .map(|(k, v)| (k.clone(), Self::from(v)))
                     .collect(),
                 optional: false,
             },

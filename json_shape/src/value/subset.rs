@@ -20,62 +20,62 @@ impl IsSubset for Value {
     /// Checks if [`JsonShape`] is subset of `other` [`JsonShape`]
     fn is_subset(&self, other: &Self) -> bool {
         match self {
-            Value::Null => other.is_optional() || other.is_null(),
+            Self::Null => other.is_optional() || other.is_null(),
             // Optionals
-            Value::Bool { optional: true } => {
+            Self::Bool { optional: true } => {
                 other.is_boolean() && other.is_optional()
                     || IsOneOf::<Optional<Boolean>>::is_one_of(other)
             }
-            Value::Number { optional: true } => {
+            Self::Number { optional: true } => {
                 other.is_number() && other.is_optional()
                     || IsOneOf::<Optional<Number>>::is_one_of(other)
             }
-            Value::String { optional: true } => {
+            Self::String { optional: true } => {
                 other.is_string() && other.is_optional()
                     || IsOneOf::<Optional<Str>>::is_one_of(other)
             }
-            Value::Array {
+            Self::Array {
                 r#type,
                 optional: true,
             } => match other {
-                Value::Array {
+                Self::Array {
                     r#type: ty,
                     optional: true,
                 } => r#type.is_subset(ty),
-                Value::OneOf { variants, .. } => variants.contains(&Value::Array {
+                Self::OneOf { variants, .. } => variants.contains(&Self::Array {
                     r#type: r#type.clone(),
                     optional: true,
                 }),
                 _ => false,
             },
-            Value::Tuple {
+            Self::Tuple {
                 elements,
                 optional: true,
             } => match other {
-                Value::Tuple {
+                Self::Tuple {
                     elements: other,
                     optional: true,
                 } => {
                     elements.iter().zip(other).all(|(a, b)| a.is_subset(b))
                         && elements.len() == other.len()
                 }
-                Value::OneOf { variants, .. } => variants.contains(&Value::Tuple {
+                Self::OneOf { variants, .. } => variants.contains(&Self::Tuple {
                     elements: elements.clone(),
                     optional: true,
                 }),
-                Value::Array { r#type, .. } => {
-                    let Value::OneOf { variants, .. } = &&**r#type else {
+                Self::Array { r#type, .. } => {
+                    let Self::OneOf { variants, .. } = &&**r#type else {
                         return false;
                     };
                     elements.iter().all(|element| variants.contains(element))
                 }
                 _ => false,
             },
-            Value::Object {
+            Self::Object {
                 content,
                 optional: true,
             } => match other {
-                Value::Object {
+                Self::Object {
                     content: other,
                     optional: true,
                 } => {
@@ -90,17 +90,17 @@ impl IsSubset for Value {
                             .is_some_and(|other_val| value.is_subset(other_val))
                     })
                 }
-                Value::OneOf { variants, .. } => variants
+                Self::OneOf { variants, .. } => variants
                     .iter()
-                    .filter(|var| matches!(var, Value::Object { .. }))
+                    .filter(|var| matches!(var, Self::Object { .. }))
                     .any(|var| self.is_subset(var)),
                 _ => false,
             },
-            Value::OneOf {
+            Self::OneOf {
                 variants,
                 optional: true,
             } => match other {
-                Value::OneOf {
+                Self::OneOf {
                     variants: var,
                     optional: true,
                 } => {
@@ -113,69 +113,69 @@ impl IsSubset for Value {
             },
 
             // Non-optionals
-            Value::Bool { optional: false } => {
+            Self::Bool { optional: false } => {
                 other.is_boolean()
                     || IsOneOf::<Boolean>::is_one_of(other)
                     || IsOneOf::<Optional<Boolean>>::is_one_of(other)
             }
-            Value::Number { optional: false } => {
+            Self::Number { optional: false } => {
                 other.is_number()
                     || IsOneOf::<Number>::is_one_of(other)
                     || IsOneOf::<Optional<Number>>::is_one_of(other)
             }
-            Value::String { optional: false } => {
+            Self::String { optional: false } => {
                 other.is_string()
                     || IsOneOf::<Str>::is_one_of(other)
                     || IsOneOf::<Optional<Str>>::is_one_of(other)
             }
-            Value::Array {
+            Self::Array {
                 r#type,
                 optional: false,
             } => match other {
-                Value::Array { r#type: ty, .. } => r#type.is_subset(ty),
-                Value::OneOf { variants, .. } => {
-                    variants.contains(&Value::Array {
+                Self::Array { r#type: ty, .. } => r#type.is_subset(ty),
+                Self::OneOf { variants, .. } => {
+                    variants.contains(&Self::Array {
                         r#type: r#type.clone(),
                         optional: false,
-                    }) || variants.contains(&Value::Array {
+                    }) || variants.contains(&Self::Array {
                         r#type: r#type.clone(),
                         optional: true,
                     })
                 }
                 _ => false,
             },
-            Value::Tuple {
+            Self::Tuple {
                 elements,
                 optional: false,
             } => match other {
-                Value::Tuple {
+                Self::Tuple {
                     elements: other, ..
                 } => {
                     elements.iter().zip(other).all(|(a, b)| a.is_subset(b))
                         && elements.len() == other.len()
                 }
-                Value::OneOf { variants, .. } => {
-                    variants.contains(&Value::Tuple {
+                Self::OneOf { variants, .. } => {
+                    variants.contains(&Self::Tuple {
                         elements: elements.clone(),
                         optional: false,
-                    }) || variants.contains(&Value::Tuple {
+                    }) || variants.contains(&Self::Tuple {
                         elements: elements.clone(),
                         optional: true,
                     })
                 }
-                Value::Array { r#type, .. } => {
-                    let Value::OneOf { variants, .. } = &&**r#type else {
+                Self::Array { r#type, .. } => {
+                    let Self::OneOf { variants, .. } = &&**r#type else {
                         return false;
                     };
                     elements.iter().all(|element| variants.contains(element))
                 }
                 _ => false,
             },
-            Value::Object {
+            Self::Object {
                 content,
                 optional: false,
             } => match other {
-                Value::Object { content: other, .. } => {
+                Self::Object { content: other, .. } => {
                     for (k, v) in other {
                         if !content.contains_key(k) && !v.is_optional() {
                             return false;
@@ -187,17 +187,17 @@ impl IsSubset for Value {
                             .is_some_and(|other_val| value.is_subset(other_val))
                     })
                 }
-                Value::OneOf { variants, .. } => variants
+                Self::OneOf { variants, .. } => variants
                     .iter()
-                    .filter(|var| matches!(var, Value::Object { .. }))
+                    .filter(|var| matches!(var, Self::Object { .. }))
                     .any(|var| self.is_subset(var)),
                 _ => false,
             },
-            Value::OneOf {
+            Self::OneOf {
                 variants,
                 optional: false,
             } => match other {
-                Value::OneOf { variants: var, .. } => {
+                Self::OneOf { variants: var, .. } => {
                     variants.is_subset(var)
                         || variants
                             .iter()

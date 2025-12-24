@@ -58,17 +58,15 @@ fn has_errors(cst: &Cst<'_>, source: &str, root: NodeRef) -> Result<(), Error> {
             cst.get(node_ref),
             Node::Token(Token::Error, _) | Node::Rule(Rule::Error, _)
         )
+    }) && let Some(error) = cst.children(root).find(|node_ref| {
+        matches!(
+            cst.get(*node_ref),
+            Node::Token(Token::Error, _) | Node::Rule(Rule::Error, _)
+        )
     }) {
-        if let Some(error) = cst.children(root).find(|node_ref| {
-            matches!(
-                cst.get(*node_ref),
-                Node::Token(Token::Error, _) | Node::Rule(Rule::Error, _)
-            )
-        }) {
-            let span = cst.span(error);
-            let value = source[span.clone()].to_string();
-            return Err(Error::InvalidJson { value, span });
-        }
+        let span = cst.span(error);
+        let value = source[span.clone()].to_string();
+        return Err(Error::InvalidJson { value, span });
     }
     Ok(())
 }

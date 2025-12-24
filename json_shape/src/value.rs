@@ -43,7 +43,7 @@ pub enum Value {
     /// Represents a JSON array.
     Array {
         /// Type contained in the Array
-        r#type: Box<Value>,
+        r#type: Box<Self>,
         /// If type is optional
         optional: bool,
     },
@@ -51,16 +51,16 @@ pub enum Value {
     /// Represents a JSON object.
     Object {
         /// Object internal members map, with key as `String` and value as [`JsonShape`]
-        content: BTreeMap<String, Value>,
+        content: BTreeMap<String, Self>,
         /// If type is optional
         optional: bool,
     },
 
     /// Represents a JSON Value that can assume one of the Values described.
-    /// Similar to an enum containing diffenrent internal types in Rust.
+    /// Similar to an enum containing different internal types in Rust.
     OneOf {
         /// All possible [`JsonShape`] values
-        variants: BTreeSet<Value>,
+        variants: BTreeSet<Self>,
         /// If type is optional
         optional: bool,
     },
@@ -69,7 +69,7 @@ pub enum Value {
     /// Similar to a Rust tuple, types are always the same and in same order
     Tuple {
         /// [`JsonShape`] order
-        elements: Vec<Value>,
+        elements: Vec<Self>,
         /// If type is optional
         optional: bool,
     },
@@ -80,37 +80,37 @@ impl Value {
     #[must_use]
     pub const fn is_optional(&self) -> bool {
         match self {
-            Value::Null => true,
-            Value::Bool { optional } => *optional,
-            Value::Number { optional } => *optional,
-            Value::String { optional } => *optional,
-            Value::Array { optional, .. } => *optional,
-            Value::Object { optional, .. } => *optional,
-            Value::OneOf { optional, .. } => *optional,
-            Value::Tuple { optional, .. } => *optional,
+            Self::Null => true,
+            Self::Bool { optional } => *optional,
+            Self::Number { optional } => *optional,
+            Self::String { optional } => *optional,
+            Self::Array { optional, .. } => *optional,
+            Self::Object { optional, .. } => *optional,
+            Self::OneOf { optional, .. } => *optional,
+            Self::Tuple { optional, .. } => *optional,
         }
     }
 
     #[allow(clippy::wrong_self_convention)]
     pub(crate) fn as_optional(self) -> Self {
         match self {
-            Value::Null => Value::Null,
-            Value::Bool { .. } => Value::Bool { optional: true },
-            Value::Number { .. } => Value::Number { optional: true },
-            Value::String { .. } => Value::String { optional: true },
-            Value::Array { r#type, .. } => Value::Array {
+            Self::Null => Self::Null,
+            Self::Bool { .. } => Self::Bool { optional: true },
+            Self::Number { .. } => Self::Number { optional: true },
+            Self::String { .. } => Self::String { optional: true },
+            Self::Array { r#type, .. } => Self::Array {
                 optional: true,
                 r#type,
             },
-            Value::Object { content, .. } => Value::Object {
+            Self::Object { content, .. } => Self::Object {
                 optional: true,
                 content,
             },
-            Value::OneOf { variants, .. } => Value::OneOf {
+            Self::OneOf { variants, .. } => Self::OneOf {
                 optional: true,
                 variants,
             },
-            Value::Tuple { elements, .. } => Value::Tuple {
+            Self::Tuple { elements, .. } => Self::Tuple {
                 optional: true,
                 elements,
             },
@@ -120,23 +120,23 @@ impl Value {
     #[allow(clippy::wrong_self_convention)]
     pub(crate) fn as_non_optional(self) -> Self {
         match self {
-            Value::Null => Value::Null,
-            Value::Bool { .. } => Value::Bool { optional: false },
-            Value::Number { .. } => Value::Number { optional: false },
-            Value::String { .. } => Value::String { optional: false },
-            Value::Array { r#type, .. } => Value::Array {
+            Self::Null => Self::Null,
+            Self::Bool { .. } => Self::Bool { optional: false },
+            Self::Number { .. } => Self::Number { optional: false },
+            Self::String { .. } => Self::String { optional: false },
+            Self::Array { r#type, .. } => Self::Array {
                 optional: false,
                 r#type,
             },
-            Value::Object { content, .. } => Value::Object {
+            Self::Object { content, .. } => Self::Object {
                 optional: false,
                 content,
             },
-            Value::OneOf { variants, .. } => Value::OneOf {
+            Self::OneOf { variants, .. } => Self::OneOf {
                 optional: false,
                 variants,
             },
-            Value::Tuple { elements, .. } => Value::Tuple {
+            Self::Tuple { elements, .. } => Self::Tuple {
                 optional: false,
                 elements,
             },
@@ -145,26 +145,26 @@ impl Value {
 
     pub(crate) const fn to_optional_mut(&mut self) {
         match self {
-            Value::Null => (),
-            Value::Bool { optional } => {
+            Self::Null => (),
+            Self::Bool { optional } => {
                 *optional = true;
             }
-            Value::Number { optional } => {
+            Self::Number { optional } => {
                 *optional = true;
             }
-            Value::String { optional } => {
+            Self::String { optional } => {
                 *optional = true;
             }
-            Value::Array { optional, .. } => {
+            Self::Array { optional, .. } => {
                 *optional = true;
             }
-            Value::Object { optional, .. } => {
+            Self::Object { optional, .. } => {
                 *optional = true;
             }
-            Value::OneOf { optional, .. } => {
+            Self::OneOf { optional, .. } => {
                 *optional = true;
             }
-            Value::Tuple { optional, .. } => {
+            Self::Tuple { optional, .. } => {
                 *optional = true;
             }
         }
@@ -172,7 +172,7 @@ impl Value {
 
     /// Return the keys contained in a [`JsonShape::Object`]
     #[must_use]
-    pub fn keys(&self) -> Option<Keys<String, Value>> {
+    pub fn keys(&self) -> Option<Keys<'_, String, Self>> {
         if let Self::Object { content, .. } = self {
             Some(content.keys())
         } else {
@@ -232,8 +232,8 @@ impl Value {
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Value::Null => write!(f, "Null"),
-            Value::Bool { optional } => write!(
+            Self::Null => write!(f, "Null"),
+            Self::Bool { optional } => write!(
                 f,
                 "{}",
                 if *optional {
@@ -242,7 +242,7 @@ impl Display for Value {
                     "Boolean"
                 }
             ),
-            Value::Number { optional } => write!(
+            Self::Number { optional } => write!(
                 f,
                 "{}",
                 if *optional {
@@ -251,7 +251,7 @@ impl Display for Value {
                     "Number"
                 }
             ),
-            Value::String { optional } => write!(
+            Self::String { optional } => write!(
                 f,
                 "{}",
                 if *optional {
@@ -260,21 +260,21 @@ impl Display for Value {
                     "String"
                 }
             ),
-            Value::Array { r#type, optional } => {
+            Self::Array { r#type, optional } => {
                 if *optional {
                     write!(f, "Option<Array<{type}>>")
                 } else {
                     write!(f, "Array<{type}>")
                 }
             }
-            Value::Object { content, optional } => {
+            Self::Object { content, optional } => {
                 if *optional {
                     write!(f, "Option<Object{{{}}}>", display_object_content(content))
                 } else {
                     write!(f, "Object{{{}}}", display_object_content(content))
                 }
             }
-            Value::OneOf { variants, optional } => {
+            Self::OneOf { variants, optional } => {
                 let variants = variants
                     .iter()
                     .map(ToString::to_string)
@@ -286,7 +286,7 @@ impl Display for Value {
                     write!(f, "OneOf[{variants}]",)
                 }
             }
-            Value::Tuple { elements, optional } => {
+            Self::Tuple { elements, optional } => {
                 let elements = elements
                     .iter()
                     .map(ToString::to_string)
@@ -305,53 +305,53 @@ impl Display for Value {
 impl Similar for Value {
     fn similar(&self, other: &Self) -> Option<Value> {
         match (self, other) {
-            (Value::Null, Value::Null) => Some(Value::Null),
-            (Value::Bool { optional }, Value::Bool { optional: opt }) => Some(Value::Bool {
+            (Self::Null, Self::Null) => Some(Self::Null),
+            (Self::Bool { optional }, Self::Bool { optional: opt }) => Some(Self::Bool {
                 optional: *optional || *opt,
             }),
-            (Value::Number { optional }, Value::Number { optional: opt }) => Some(Value::Number {
+            (Self::Number { optional }, Self::Number { optional: opt }) => Some(Self::Number {
                 optional: *optional || *opt,
             }),
-            (Value::String { optional }, Value::String { optional: opt }) => Some(Value::String {
+            (Self::String { optional }, Self::String { optional: opt }) => Some(Self::String {
                 optional: *optional || *opt,
             }),
             (
-                Value::Array { r#type, optional },
-                Value::Array {
+                Self::Array { r#type, optional },
+                Self::Array {
                     r#type: ty,
                     optional: opt,
                 },
-            ) if ty == r#type => Some(Value::Array {
+            ) if ty == r#type => Some(Self::Array {
                 r#type: ty.clone(),
                 optional: *optional || *opt,
             }),
             (
-                Value::Object { content, optional },
-                Value::Object {
+                Self::Object { content, optional },
+                Self::Object {
                     content: cont,
                     optional: opt,
                 },
-            ) if cont == content => Some(Value::Object {
+            ) if cont == content => Some(Self::Object {
                 content: content.clone(),
                 optional: *optional || *opt,
             }),
             (
-                Value::OneOf { variants, optional },
-                Value::OneOf {
+                Self::OneOf { variants, optional },
+                Self::OneOf {
                     variants: var,
                     optional: opt,
                 },
-            ) if var == variants => Some(Value::OneOf {
+            ) if var == variants => Some(Self::OneOf {
                 variants: variants.clone(),
                 optional: *optional || *opt,
             }),
             (
-                Value::Tuple { elements, optional },
-                Value::Tuple {
+                Self::Tuple { elements, optional },
+                Self::Tuple {
                     elements: ty,
                     optional: opt,
                 },
-            ) if ty == elements => Some(Value::Tuple {
+            ) if ty == elements => Some(Self::Tuple {
                 elements: ty.clone(),
                 optional: *optional || *opt,
             }),

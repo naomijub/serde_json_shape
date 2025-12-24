@@ -2,6 +2,7 @@
 //! Library to enable json shape manipulation from json sources or `serde_json::Values`.
 //! Check Readme for more info on usage.
 
+#![allow(mismatched_lifetime_syntaxes)]
 #![allow(clippy::redundant_pub_crate)]
 /// Module containing Error types
 pub mod error;
