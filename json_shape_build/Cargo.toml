@@ -1,6 +1,6 @@
 [package]
 name = "json_shape_build"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Julia Naomi <jnboeira@outlook.com>",]
 description = "Rust library to build JSON shape data structures"
