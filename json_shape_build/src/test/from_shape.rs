@@ -142,6 +142,7 @@ fn from_array_of_enum() {
     assert_eq!(
         file,
         "pub type ArrayOfEnum2CrcB0F27C9A = Vec<Enum2CrcB0F27C9A>;
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum Enum2CrcB0F27C9A {
     Number(f64),
@@ -181,6 +182,7 @@ fn from_tuple() {
     assert_eq!(
         file,
         "pub type Tuple3CrcAF3E2524 = (f64, String, Enum2CrcEDFEBA3B);
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum Enum2CrcEDFEBA3B {
     Number(f64),
