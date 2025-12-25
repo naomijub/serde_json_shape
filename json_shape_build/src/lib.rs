@@ -206,7 +206,7 @@ fn create_object(scope: &mut Scope, name: &str, content: &BTreeMap<String, json_
         .derive("serde::Serialize")
         .derive("serde::Deserialize");
     for (name, r#type) in content {
-        let mut field = Field::new(&name.to_case(Case::Snake), shape_representation(r#type));
+        let mut field = Field::new(name.to_case(Case::Snake), shape_representation(r#type));
         field.vis("pub");
         struct_data.push_field(field);
     }

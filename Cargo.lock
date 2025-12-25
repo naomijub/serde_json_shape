@@ -57,6 +57,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "codespan-reporting"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af491d569909a7e4dee0ad7db7f5341fef5c614d5b8ec8cf765732aba3cff681"
+dependencies = [
+ "serde",
+ "termcolor",
+ "unicode-width 0.2.1",
+]
+
+[[package]]
 name = "console"
 version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,7 +186,7 @@ dependencies = [
 name = "json_shape"
 version = "0.5.2"
 dependencies = [
- "codespan-reporting 0.12.0",
+ "codespan-reporting 0.13.1",
  "insta",
  "lelwel",
  "logos",
