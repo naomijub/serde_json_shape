@@ -24,7 +24,7 @@ codespan-reporting = "0.13"
 insta = { version = "1.43.1", features = [] }
 
 [build-dependencies]
-lelwel = "0.8.0"
+lelwel = "0.10.0"
 
 [lints]
 workspace = true
