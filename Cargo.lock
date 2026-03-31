@@ -183,7 +183,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3657528190e6efd6c74addaaadfe21ca59aa4138a43ef7b6cf588ba0372518ce"
 dependencies = [
  "codespan-reporting 0.12.0",
- "lelwel",
+ "lelwel 0.8.0",
  "logos 0.15.0",
  "serde",
  "serde_json",
@@ -196,7 +196,7 @@ version = "0.5.2"
 dependencies = [
  "codespan-reporting 0.13.1",
  "insta",
- "lelwel",
+ "lelwel 0.10.2",
  "logos 0.16.1",
  "serde",
  "serde_json",
@@ -229,6 +229,17 @@ checksum = "1b114b138d72035523cd873962259a579c2681f90fcfa48d4df4e2496f1e2460"
 dependencies = [
  "codespan-reporting 0.11.1",
  "logos 0.15.0",
+]
+
+[[package]]
+name = "lelwel"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89b6f64b11a960d7efbd56beae33ca8e2f10351baa6318b2be8924e6763e8644"
+dependencies = [
+ "codespan-reporting 0.13.1",
+ "logos 0.16.1",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -361,6 +372,12 @@ name = "regex-syntax"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
+
+[[package]]
+name = "rustc-hash"
+version = "2.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94300abf3f1ae2e2b8ffb7b58043de3d399c73fa6f4b73826402a5c457614dbe"
 
 [[package]]
 name = "rustc_version"
