@@ -281,9 +281,9 @@ impl Display for Value {
                     .collect::<Vec<_>>()
                     .join(" | ");
                 if *optional {
-                    write!(f, "Option<OneOf[{variants}]>",)
+                    write!(f, "Option<OneOf[{variants}]>")
                 } else {
-                    write!(f, "OneOf[{variants}]",)
+                    write!(f, "OneOf[{variants}]")
                 }
             }
             Self::Tuple { elements, optional } => {
@@ -293,9 +293,9 @@ impl Display for Value {
                     .collect::<Vec<_>>()
                     .join(", ");
                 if *optional {
-                    write!(f, "Option<Tuple({elements})>",)
+                    write!(f, "Option<Tuple({elements})>")
                 } else {
-                    write!(f, "Tuple({elements})",)
+                    write!(f, "Tuple({elements})")
                 }
             }
         }
