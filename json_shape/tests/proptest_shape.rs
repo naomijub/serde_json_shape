@@ -70,7 +70,7 @@ fn arb_same_kind_sources() -> impl Strategy<Value = Vec<Value>> {
                         .into_iter()
                         .map(|value| {
                             Value::Object(
-                                [("k".to_string(), value)].into_iter().collect::<Map<String, Value>>(),
+                                std::iter::once(("k".to_string(), value)).collect::<Map<String, Value>>(),
                             )
                         })
                         .collect()
