@@ -9,7 +9,7 @@ fn from_null() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type Void = ();");
@@ -21,7 +21,7 @@ fn from_number() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type Number = f64;");
@@ -33,7 +33,7 @@ fn from_opt_number() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type NullableNumber = Option<f64>;");
@@ -45,7 +45,7 @@ fn from_bool() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type Bool = bool;");
@@ -57,7 +57,7 @@ fn from_opt_bool() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type NullableBool = Option<bool>;");
@@ -69,7 +69,7 @@ fn from_str() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type Str = String;");
@@ -81,7 +81,7 @@ fn from_opt_str() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type NullableStr = Option<String>;");
@@ -96,7 +96,7 @@ fn from_array() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(file, "pub type ArrayOfNumber = Vec<f64>;");
@@ -111,7 +111,7 @@ fn from_opt_array() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(
@@ -136,7 +136,7 @@ fn from_array_of_enum() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(
@@ -176,7 +176,7 @@ fn from_tuple() {
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope).unwrap();
 
     let file = scope.to_string();
     assert_eq!(
@@ -194,4 +194,16 @@ pub struct Struct1Crc913C1A62 {
     pub key: f64,
 }"
     );
+}
+
+#[test]
+#[should_panic(expected = "rust keywords are not valid identifiers")]
+fn fail_for_object_keyword_field() {
+    let shape = JsonShape::Object {
+        content: [("type".to_string(), JsonShape::String { optional: false })].into(),
+        optional: false,
+    };
+
+    let mut scope = Scope::new();
+    first_pass(&shape, &mut scope).unwrap();
 }

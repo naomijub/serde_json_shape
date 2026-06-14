@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, str::FromStr};
+use std::collections::BTreeMap;
 
 use crate::{
     error::Error,
@@ -199,6 +199,16 @@ fn parse_token(cst: &Cst<'_>, node_ref: NodeRef) -> Result<Value, Error> {
     }
 }
 
+fn parse_json_object_key(source: &str, span: std::ops::Range<usize>) -> Result<String, Error> {
+    let raw = &source[span];
+    let value: serde_json::Value =
+        serde_json::from_str(raw).map_err(|_| Error::InvalidObjectKey)?;
+    match value {
+        serde_json::Value::String(key) => Ok(key),
+        _ => Err(Error::InvalidObjectKey),
+    }
+}
+
 fn parse_member(
     cst: &Cst<'_>,
     sub_node: NodeRef,
@@ -212,8 +222,7 @@ fn parse_member(
         return Err(Error::InvalidObjectKey);
     };
 
-    let key_span = cst.span(key);
-    let key = String::from_str(&source[key_span.start + 1..key_span.end - 1]).unwrap_or_default();
+    let key = parse_json_object_key(source, cst.span(key))?;
 
     has_errors(cst, source, sub_node)?;
     let Some(member_value) = cst.children(sub_node).find(|node_ref| {
@@ -452,6 +461,32 @@ mod tests {
                     content: BTreeMap::default(),
                     optional: false
                 }),
+                optional: false
+            }
+        );
+    }
+
+    #[test]
+    fn parse_escaped_fields() {
+        let source = r#"{"a\\nb":1, "a\\u0041": 2, "quoted_key\\\"x\\\"": true, "\\u0000": "x"}"#;
+        let cst = Parser::parse(source, &mut Vec::new());
+
+        let value = parse_cst(&cst, source).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Object {
+                content: [
+                    ("\\u0000".to_string(), Value::String { optional: false }),
+                    ("a\\nb".to_string(), Value::Number { optional: false }),
+                    ("a\\u0041".to_string(), Value::Number { optional: false }),
+                    (
+                        "quoted_key\\\"x\\\"".to_string(),
+                        Value::Bool { optional: false }
+                    )
+                ]
+                .into_iter()
+                .collect(),
                 optional: false
             }
         );
