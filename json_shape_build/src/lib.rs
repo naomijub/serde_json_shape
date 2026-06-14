@@ -2,6 +2,7 @@
 
 use std::{
     collections::{BTreeMap, BTreeSet},
+    io::{self},
     path::{Path, PathBuf},
 };
 
@@ -90,7 +91,7 @@ pub fn compile_json(
 
     let mut scope = Scope::new();
 
-    first_pass(&shape, &mut scope);
+    first_pass(&shape, &mut scope)?;
     let content = format!(
         "//! Generated `JsonShape` file.\nuse serde;\n\n{}",
         scope.to_string()
@@ -99,7 +100,7 @@ pub fn compile_json(
     Ok(scope.to_string())
 }
 
-pub(crate) fn first_pass(shape: &JsonShape, scope: &mut Scope) {
+pub(crate) fn first_pass(shape: &JsonShape, scope: &mut Scope) -> io::Result<()> {
     match &shape {
         json_shape::JsonShape::Null => {
             scope.new_type_alias("Void", "()").vis("pub");
@@ -137,52 +138,53 @@ pub(crate) fn first_pass(shape: &JsonShape, scope: &mut Scope) {
         } => {
             let name = shape_name(shape);
             create_array(scope, &name, *optional, inner);
-            create_subtype(scope, inner);
+            create_subtype(scope, inner)?;
         }
         json_shape::JsonShape::Object { content, .. } => {
             let name = shape_name(shape);
             create_object(scope, &name, content);
             for inner in content.values() {
-                create_subtype(scope, inner);
+                create_subtype(scope, inner)?;
             }
         }
         json_shape::JsonShape::OneOf { variants, .. } => {
             let name = shape_name(shape);
             create_enum(scope, &name, variants);
             for inner in variants {
-                create_subtype(scope, inner);
+                create_subtype(scope, inner)?;
             }
         }
         json_shape::JsonShape::Tuple { elements, optional } => {
             let name = shape_name(shape);
             create_tuple(scope, &name, *optional, elements);
             for inner in elements {
-                create_subtype(scope, inner);
+                create_subtype(scope, inner)?;
             }
         }
     }
+    Ok(())
 }
 
-fn create_subtype(scope: &mut Scope, shape: &JsonShape) {
+fn create_subtype(scope: &mut Scope, shape: &JsonShape) -> io::Result<()> {
     match shape {
         json_shape::JsonShape::Array {
             r#type: inner,
             optional: _,
         } => {
-            create_subtype(scope, inner);
+            create_subtype(scope, inner)?;
         }
         json_shape::JsonShape::Object { content, .. } => {
             let name = shape_name(shape);
             create_object(scope, &name, content);
             for inner in content.values() {
-                create_subtype(scope, inner);
+                create_subtype(scope, inner)?;
             }
         }
         json_shape::JsonShape::OneOf { variants, .. } => {
             let name = shape_name(shape);
             create_enum(scope, &name, variants);
             for inner in variants {
-                create_subtype(scope, inner);
+                create_subtype(scope, inner)?;
             }
         }
         json_shape::JsonShape::Tuple {
@@ -190,11 +192,16 @@ fn create_subtype(scope: &mut Scope, shape: &JsonShape) {
             optional: _,
         } => {
             for inner in elements {
-                create_subtype(scope, inner);
+                create_subtype(scope, inner)?;
             }
         }
         _ => {}
     }
+    Ok(())
+}
+
+fn is_rust_keyword(s: &str) -> bool {
+    syn::parse_str::<syn::Ident>(s).is_err()
 }
 
 fn create_object(scope: &mut Scope, name: &str, content: &BTreeMap<String, json_shape::JsonShape>) {
@@ -207,6 +214,10 @@ fn create_object(scope: &mut Scope, name: &str, content: &BTreeMap<String, json_
         .derive("serde::Deserialize");
     for (name, r#type) in content {
         let mut field = Field::new(name.to_case(Case::Snake), shape_representation(r#type));
+        assert!(
+            !is_rust_keyword(&field.name),
+            "rust keywords are not valid identifiers"
+        );
         field.vis("pub");
         struct_data.push_field(field);
     }
@@ -284,7 +295,7 @@ fn shape_representation(shape: &JsonShape) -> String {
         JsonShape::Array { r#type, optional } => {
             let sub_shape = shape_representation(r#type);
             if *optional {
-                format!("Optional<Vec<{sub_shape}>>")
+                format!("Option<Vec<{sub_shape}>>")
             } else {
                 format!("Vec<{sub_shape}>")
             }
