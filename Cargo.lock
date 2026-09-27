@@ -258,7 +258,7 @@ dependencies = [
  "json_shape",
  "serde",
  "serde_json",
- "syn 2.0.119",
+ "syn 3.0.0",
 ]
 
 [[package]]
